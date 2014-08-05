@@ -1,0 +1,10 @@
+*~
+*.mat
+# but do track in the reference folder
+!reference/*.mat
+
+figures/
+
+junk/
+
+data/

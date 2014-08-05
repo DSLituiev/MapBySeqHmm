@@ -1,0 +1,14 @@
+% test
+addpath('/media/Processing/MATLABuserfunctions/mtimesx');
+
+
+E = [ ones(1,3); 2*ones(1,3)];
+T = cat(3, 0.1*ones(3,3), 0.5*ones(3,3));
+
+% mtimesx(T)
+
+mex -v -largeArrayDims mexCrossMatr.c CFLAGS="\$CFLAGS -std=c99" 
+
+A = mexCrossMatr(E, T);
+
+A0 =  bsxfun(@times,  permute( E(1:end-1, :), [2, 3, 1] ), T ) ;

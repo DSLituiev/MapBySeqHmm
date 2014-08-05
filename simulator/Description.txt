@@ -1,0 +1,8 @@
+=== What is the probability of learning the position of the causative SNP correctly?
+P[ L(j|X) > L(~j|X) ]
+
+Emission:
+    random('binom',n,p)
+Distribution of the distances between the reads:
+    tau = T/M;
+    P( t \in (t-.5*dt, t+.5*dt] ) =  M*(exp( - (t-.5*dt)./tau) - exp( - (t + .5*dt)./tau) );
