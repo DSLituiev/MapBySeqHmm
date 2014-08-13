@@ -27,17 +27,24 @@ flagSkipTextChromosomes = true;
 % mt_refCount
 % mt_altCount
 
-header = textscan(fid, repmat('%s ',[1, 18]), 1, 'delimiter', ';');
+header = textscan(fid, repmat('%s ',[1, 20]), 1, 'delimiter', ';');
 fclose(fid);
 
-
-if ~isempty(header{16}) % 17, 18
+flagRNA = false;
+flagWT = false;
+    
+if ~isempty(header{20}{:})
+    flagWT = true;
+    flagRNA = true;
+    dataPattern = ['%s %u %f %s %s %s',...
+                  ' %u %s %s %s %u %u',...
+                  ' %u %u %u %u %u %u %u8 %f %f'];
+elseif ~isempty(header{16}{:}) % 17, 18
     flagWT = true;
     dataPattern = ['%s %u %f %s %s %s',...
                       ' %u %s %s %s %u %u ',...
                       ' %u %u %u %u %u %u %u '];
 else
-    flagWT = false;
     dataPattern = ['%s %u %f %s %s %s',...
                       ' %u %s %s %s %u %u ',...
                       ' %u %u %u %u %u %u %u '];
@@ -62,9 +69,9 @@ chrNumbers = str2double(chrNames );
 literalChrNames = find(isnan(chrNumbers));
     
 if flagSkipTextChromosomes
-    textChrInds = false(size(chromosomeStr));
+    textChrInds = false(size(chromosomeStr));    
     for jj = 1:numel(literalChrNames)
-        textChrInds = textChrInds | strcmpi(chromosomeStr, chrNames(literalChrNames));
+        textChrInds = textChrInds | strcmpi(chromosomeStr, chrNames(literalChrNames(jj)));
     end
     for jj = 1:size(data, 2)
        data{jj}(textChrInds) = [];
@@ -91,12 +98,18 @@ q = data{15};
 ChrNumber = max(chromosome);
 
 Reads = readDataVect(chromosome, double(position), double(q), double(r), [], false);
-Base = 2;
-Reads.xPrior = Base.^(data{3});
 
+BASE = 2;
+Reads.xPrior = BASE.^(data{3});
 Reads.xPrior = Reads.xPrior./sum(Reads.xPrior);
-
 Reads.xPrior = log10(Reads.xPrior);
+
+if flagRNA
+    % Reads.xPrior(~logical(data{19})) = -Inf;
+    Reads.xRnaPresence = double(data{19});
+    Reads.xRnaPrior = double(data{20});
+end
+
 Reads.geneID = data{6};
 Reads.geneSO = data{7};
 Reads.mutCDS = data{8};
@@ -108,6 +121,8 @@ if flagWT
     Reads.rw = double(data{16});
     Reads.qw = double(data{18});
 end
+
+
 
 fprintf('%u reads extracted\n', Reads.Mtot)
 

@@ -1,4 +1,4 @@
-function [E, c] = emissionMixBetaBinomial(q, r, study, theta, lambda1)
+function [E, c] = emissionMixBetaBinomial(q, r, pop, theta, lambda1)
 % emissionk returns emission BetaBinomial-Uniform mixture probabilities
 %
 
@@ -7,18 +7,18 @@ if ~isreal(theta)|| ~isreal(lambda1)
 end
 %% P[q|r,k]
 % M = numel(q);
-f = double(study.kvect)./(2*study.N);
+f = double(pop.kvect)./(2*pop.N);
 % E = binopdf(qq, rr, ff);
 % E = 10.^ logBetaBinomialThetaMu0(double(q), double(r), f', theta);
 
-N = study.N;
+gi1 = lambda1;
+% N = pop.N;
+% [pBB, pU] = conditBetaBinomStat(q, r, theta, N, f, 1./N);
+% gi1 = lambda1*pBB./(lambda1*pBB + (1-lambda1)*pU );
 
-[pBB, pU] = conditBetaBinomStat(q, r, theta, N, f, 1./N);
 
-gi1 = lambda1*pBB./(lambda1*pBB + (1-lambda1)*pU );
- 
 % E = (1-lambda1)/study.N+ lambda1*10.^logBetaBinomialThetaMu0(q, r, f, theta);
-E = bsxfun(@plus, (1-gi1)./1 , bsxfun(@times, gi1, 10.^logBetaBinomialThetaMu0(q,r,f,theta)));
+E = bsxfun(@plus, (1-gi1) , bsxfun(@times, gi1, 10.^logBetaBinomialThetaMu0(q,r,f,theta)));
 c = 1;
 % E(:, c>.5) = flipud(E(:, c>.5));
 % c = ones(size(cT));

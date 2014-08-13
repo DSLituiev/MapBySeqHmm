@@ -8,7 +8,7 @@ if obj.flagWT
     [mE, mC] = feval(obj.emissionHandle, double(obj.q), double(obj.r), obj.pop);
     [wE, wC] = feval(obj.emissionHandle, double(obj.qw), double(obj.rw), obj.pop);
     obj.E = mE.* fliplr(wE);
-    obj.c = (mC + wC)./2;
+    obj.c = 1; % (mC + wC)./2;
 else
     [obj.E, obj.c] = feval(obj.emissionHandle, double(obj.q), double(obj.r), obj.pop);
 end

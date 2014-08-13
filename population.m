@@ -6,6 +6,7 @@ classdef population < hgsetget
         kvect
         f
         Pstat
+        Pflat
         Q
     end
     
@@ -21,7 +22,8 @@ classdef population < hgsetget
                     obj.f = obj.kvect./(2*obj.N);
                 end
                 obj = obj.stationaryDistribution;
-                obj = obj.calcQmatrix;
+                obj = obj.calcQmatrix;                
+                obj.Pflat = ones(1, obj.Np)./ obj.Np;
             end
             
         end
@@ -38,6 +40,7 @@ classdef population < hgsetget
                 end
                 obj = obj.stationaryDistribution;
                 obj = obj.calcQmatrix;
+                obj.Pflat = ones(1, obj.Np)./ obj.Np;
             end
             
         end

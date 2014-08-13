@@ -94,9 +94,9 @@ function  plotChromosomes(obj, fieldName, varargin)
                 maxXMb(chr) = single(maxNt(chr))*1e-6;
                 
                 if ( numel(xValues) == numel(yValues) )
-                    obj.prevLine(chr, lserClmn) = doplottingcurve( xValues, yValues, p );
+                    obj.prevLine(chr, lserClmn) = doplottingcurve( xValues, yValues, inds, p );
                 elseif isscalar(yValues)
-                    obj.prevLine(chr, lserClmn) = doplottingline( maxNt(chr), yValues,  p );
+                    obj.prevLine(chr, lserClmn) = doplottingline( maxNt(chr), yValues, inds, p );
                 else
                     warning('plotAllChr:dimmismatch','dimension mismatch between .x and the .(%s)! Nothing to plot', fieldName)
                 end
@@ -132,8 +132,8 @@ function  plotChromosomes(obj, fieldName, varargin)
             elseif  ~flagFigOld % isempty(p.Results.ylim)
                 obj.prevYLims = [minY, maxY];
             else
-                obj.prevYLims(1) = min(obj.prevYLims(1), minY);
-                obj.prevYLims(2) = max(obj.prevYLims(2), maxY);
+                obj.prevYLims(1) = nanmin(obj.prevYLims(1), minY);
+                obj.prevYLims(2) = nanmax(obj.prevYLims(2), maxY);
             end
 
             set(spl, 'ylim', obj.prevYLims);
@@ -196,11 +196,19 @@ function  plotChromosomes(obj, fieldName, varargin)
             
             
             %% subfunctions
-            function lser = doplottingcurve(xValues , yValues , p)
-                if    ~p.Results.exp10
-                    lser = p.Results.plotfun(xValues, yValues);
-                elseif p.Results.exp10
-                    lser = p.Results.plotfun( xValues, 10.^yValues);
+            function lser = doplottingcurve(xValues , yValues , inds, p)
+                if nargin(p.Results.plotfun) < 3
+                    if    ~p.Results.exp10
+                        lser = p.Results.plotfun(xValues, yValues);
+                    elseif p.Results.exp10
+                        lser = p.Results.plotfun( xValues, 10.^yValues);
+                    end
+                else
+                    if    ~p.Results.exp10
+                        lser = p.Results.plotfun(xValues, yValues, inds);
+                    elseif p.Results.exp10
+                        lser = p.Results.plotfun( xValues, 10.^yValues, inds);
+                    end
                 end
             end
             

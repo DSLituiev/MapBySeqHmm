@@ -1,4 +1,4 @@
-function [theta, lambda, varargout] = runSimpleEM_BetaBinomAndUniform(pop, q, r, N, varargin)
+function [theta, lambda, varargout] = runSimpleEM_BetaBinomAndUniform(Pf, q, r, N, varargin)
 % runs EM to unmix Beta-Binomial and Uniform Distributions treating each
 % quasi-binomially sampled locus independently;
 % assumes that the underlying state variable 'f = 0, 1/(2N), ... 1/2'
@@ -8,7 +8,7 @@ function [theta, lambda, varargout] = runSimpleEM_BetaBinomAndUniform(pop, q, r,
 
 f = 0:1/(2*N):1/2;
 %= P(f| stationary model)
-Pf = pop.Pstat;
+% Pf = pop.Pstat;
 
 %% check the input parameters
 p = inputParser;

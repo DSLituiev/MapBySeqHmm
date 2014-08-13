@@ -4,6 +4,7 @@ tic
 
 
 DATA_PATH = '/media/Processing/seq/data';
+% DATA_PATH = '/media/Processing/seq/olddata';
 % DATA_PATH = './data';
 USERFNCT_PATH = '/media/Processing/MATLABuserfunctions';
 % addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions/binomial') );
@@ -13,7 +14,7 @@ addpath(fullfile(USERFNCT_PATH, 'MinMaxSelection'));
 addpath(fullfile(USERFNCT_PATH, 'newtonraphson'));
  savepath;
 addpath('./utilites');
-addpath('./betabinomial');
+% addpath('./betabinomial');
 addpath('./plotting');
 addpath('./emission');
 % addpath('.\@chromProb');
@@ -26,19 +27,18 @@ addpath('./emission');
 
 %= number of plants:
 
-% dataID = 'MO8-rmdup-clipOverlap-q20-freebayes-ems-annotation'; N = 278;
-dataID = 'MO7-rmdup-clipOverlap-q20-freebayes-ems-annotation'; N = 181;
+dataID = 'MO8-rmdup-clipOverlap-q20-freebayes-ems-annotation-rna'; N = 278;  chr0 = 5;
+% dataID = 'MO7-rmdup-clipOverlap-q20-freebayes-ems-annotation-rna'; N = 181; chr0 = 1;
 % dataID = '73-ngm-rmdup-clipOverlap-q20';
 % dataID = '39-ngm-rmdup-clipOverlap-q20-ems-annotation';
-% dataID = 'ABD159-rmdup-clipOverlap-q20-freebayes-ems-annotation-repfilt'; chr0 = 2; x0 = 17521246; % bkgrID = 'ABD241-rmdup-clipOverlap-freebayes';
-% dataID = 'ABD173-rmdup-clipOverlap-q20-freebayes-ems-annotation-repfilt'; chr0 = 3 ; x0 = 1619248; % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';
+% dataID = 'ABD159-rmdup-clipOverlap-q20-freebayes-ems-annotation'; chr0 = 2; x0 = 17521246;  N = 100; % bkgrID = 'ABD241-rmdup-clipOverlap-freebayes';
+% dataID = 'ABD173-rmdup-clipOverlap-q20-freebayes-ems-annotation'; chr0 = 3 ; x0 = 1619248;  N = 50;  % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';
 
 % dataID = 'MO8_mutant_pool-rmdup-clipOverlap-q20-freebayes-ems-annotation-repfilt';
 
-% dataID = 'HL10-rmdup-clipOverlap-q20-freebayes-ems-annotation-repfilt';  chr0 =  3 ;  x0 =  16473265;
+% dataID = 'HL10-rmdup-clipOverlap-q20-freebayes-ems-annotation';  chr0 =  3 ;  x0 =  16473265;N = 50;
 
-%  dataID = 'HL7_Paired-rmdup-clipOverlap-freebayes-ems-annotation-repfilt'; x0 = 5672441; chr0 = 1;
-%  dataID = 'HL7_Paired-rmdup-clipOverlap-q20-freebayes-ems-annotation-repfilt'; x0 = 5672441; chr0 = 1;
+%  dataID = 'HL7_Paired-rmdup-clipOverlap-q20-freebayes-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
 % dataID = 'HL7_Paired-ngm-rmdup-clipOverlap-freebayes-ems-annotation-repfilt'; x0 = 5672441; chr0 = 1;
 % dataID = 'HL7_Paired-rmdup-clipOverlap-mpileup-ems-annotation-repfilt'; x0 = 5672441; chr0 = 1;
 
@@ -78,7 +78,7 @@ exportfig(gcf, fullfile('figures', dataID,'qualityCtrl'), 'format','eps', 'color
 
 % visualizeAnnotationStat(annotation)
 
-% AR.unmix();
+
 
 % AR.unmix('plot');
 
@@ -89,17 +89,26 @@ clear ChrMap;
 
 AR.pop = N;
 %%
+if ~AR.flagWT
+    AR.unmix();
+    [theta, lambda1] = runSimpleEM_BetaBinomAndUniform(AR.pop.Pstat, double(AR.q),...
+        double(AR.r), N, 'v',...
+        'contribution', AR.contrib ,'errTol', 1e-5, 'contribution', AR.contrib);
+else
+    [theta, lambda1] = runSimpleEM_BetaBinomAndUniform(AR.pop.Pflat, double([AR.q; AR.qw]),...
+        double([AR.r; AR.rw]), N, 'v',...
+        'contribution', AR.contrib ,'errTol', 1e-4);
+end
+% 
 % theta = 1e-2;
 % lambda1 = 1;
-% 
-[theta, lambda1, ~] = runSimpleEM_BetaBinomAndUniform(AR.pop, double(AR.q),...
-    double(AR.r), N, 'v',...
-    'contribution', AR.contrib ,'errTol', 1e-4);% , 'contribution', AR.contrib);
+
+% AR.includeRnaPresence()
 
 AR.emissionHandle = @(q, r, study)emissionMixBetaBinomial(q, r, AR.pop, theta, lambda1);
 
 %  emissionHandle = @(q, r, study)emissionBetaBinomial(q, r, study, theta);
-% emissionHandle = @(qq, rr, ff)emissionk0(qq, rr, study);
+% AR.emissionHandle = @(qq, rr, ff)emissionk0(qq, rr, AR.pop);
 % AR.contrib = ones(size(AR.x));
 
 % AR.Alpha = 1./(0:0.05:1);
@@ -108,7 +117,7 @@ AR.Alpha = 17;
 % load( 'emission_fun.mat')
 %  AR.E = E;
 %  AR.contrib = contrib;
-%  AR.contrib = 1;
+%  AR.contrib = 1;really
 AR.calcEmission;
 AR.run();
 
@@ -128,7 +137,7 @@ AR.plotChromosomes('xLogOdds', 'yscale', 'lin', 'figure', 'new', 'yThr', 0);
 fig(gcf, 'width', 24)
 exportfig(gcf, fullfile('figures', dataID,'LogLiOdds'), 'format','eps', 'color', 'rgb')
 
-AR.plotStemsLP( 'ylim', [-10,0])
+AR.plotStemsLP( 'ylim', [-20,0])
 fig(gcf, 'width', 24)
 exportfig(gcf, fullfile('figures', dataID, 'LH-Posterior'), 'format','eps', 'color', 'rgb')
 
@@ -149,49 +158,23 @@ exportfig(gcf, fullfile('figures', dataID, 'SNP Ratio'), 'format','eps', 'color'
 
 % AR.plotChromosomes('contrib', 'yscale', 'lin', 'figure', 'new', 'yThr', 0);
 
-AR.plotChromosomes('dx', 'yscale', 'log', 'figure', 'new',  'plotfun', @(x,y)plot(x,y, 'rx'));
 
 figure
-plot(AR.x(AR.chromosome == 5)*1e-6, AR.dx(AR.chromosome == 5), 'rx')
+plot(AR.x(AR.chromosome == chr0)*1e-6, AR.dx(AR.chromosome == chr0), 'rx')
 set(gca, 'yscale', 'log')
 
-figure
-plot(AR.x(AR.chromosome == 1)*1e-6, AR.dx(AR.chromosome == 1), 'rx')
-set(gca, 'yscale', 'log')
 %%
 %%
 
 % AR.plotStems('xPosteriorNorm', 'figure', 'new');
 % AR.plotStems('xPselNorm', 'yThr', 0);
-numberOfHits = 2000;
+numberOfHits = 2e6;
 
-AR.printTopHits(fullfile('figures',dataID, [dataID, '-out.csv']), numberOfHits)
+AR.printTopHits(fullfile('figures',dataID, [dataID, '-out.csv']), numberOfHits, 'xLogOdds', 'cutoffValue', 0)
 
 % 
 % E = AR.E;
 % contrib = AR.contrib;
 % save('emission_obj', 'E', 'contrib')
 
-return
-% ff =  0:(1/2/N):(1);
-q1 = 25;
-q2 = 60;
-figure
-plot(f, (binopdf(25,100,f)) , 'g-' , 'linewidth', 2)
-hold all
-plot(f, 10.^logBetaBinomialThetaMu0(q1 ,100,f, theta), 'm-', 'linewidth', 2)
-plot(f, (1-lambda1)*1/N + lambda1*10.^logBetaBinomialThetaMu0(q1 ,100,f, theta), 'r-', 'linewidth', 2)
-plot(f, (binopdf(q2 ,100,f)) , 'g:', 'linewidth', 2)
-plot(f, 10.^logBetaBinomialThetaMu0(q2 ,100,f, theta) , 'm:', 'linewidth', 2)
-plot(f, (1-lambda1)*1/N + lambda1*10.^logBetaBinomialThetaMu0(q2,100,f, theta), 'r:', 'linewidth', 2)
-legend({'binomial', '\beta-binomial', '\beta-binomial + uniform'})
-fig(gcf, 'height', 12, 'width', 16)
-
-% exportfig(gcf, fullfile('../figures', ['demo-beta-mix']), 'format','eps', 'color', 'rgb')
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%55
-%% reading specific line from a text file  
-% 
-% linenum = 3; % Or whichever line you wish to read
-% textscan(fid, '%s', 1, 'delimiter', '\n', 'headerlines', linenum-1);
+finishing_beep(1, .2, 3)

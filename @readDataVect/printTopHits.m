@@ -1,16 +1,42 @@
-function printTopHits(obj, filename, numPerChr)
+function printTopHits(obj, filename, varargin)
+
+%% check the input parameters
+p = inputParser;
+addRequired(p, 'obj', @isobject);
+addRequired(p, 'filename', @ischar);
+%
+addOptional(p,'numPerChr', 100, @(x)isnumeric(x)&isscalar(x)  );
+addOptional(p,'rankField', 'xPosteriorNorm', @(x)isprop(obj, x)  );
+%
+addParamValue(p, 'cutoffValue',           [],  @(x)(isnumeric(x) & (isscalar(x)|isempty(x)))  )
+addParamValue(p, 'cutoffField', 'xPselNorm', @(x)isprop(obj, x) );
+
+parse(p, obj, filename, varargin{:});
+
+numPerChr = p.Results.numPerChr;
+rankField = p.Results.rankField;
+%%
 soDict = soDictionary();
 
-hitInds = (obj.xPselNorm < obj.xPosteriorNorm);
+if ~isempty(p.Results.cutoffValue)
+    hitInds = (p.Results.cutoffValue < obj.(rankField) );
+else
+    hitInds = (obj.(p.Results.cutoffField) < obj.(rankField) );    
+end
 
 for  chr = obj.chrNumber:-1:1
-    maxChrHit(chr,1) = max(obj.xPosteriorNorm(hitInds & obj.chromosome == chr));
+    a =  max(obj.(rankField)(hitInds & obj.chromosome == chr));
+    if ~isempty(a)
+        maxChrHit(chr,1) = a;
+    else
+        maxChrHit(chr,1) = NaN;
+    end
 end
 
 [~, chrSortOrder] = sort( maxChrHit, 1, 'descend');
 
 chrRanking = uint32(tiedrank(-maxChrHit));
-xHitRanking = uint32(tiedrank(- obj.xPosteriorNorm(hitInds) ));
+xHitRanking = uint32(tiedrank(- obj.(rankField)(hitInds) ));
 
 xRanks = zeros(size(hitInds), 'double');
 xRanks(hitInds) = xHitRanking;
@@ -21,34 +47,47 @@ end
 
 fprintf( fID, ['chr;pos;rank w/i chr;chr rank;rank;',...
     'LogLHOdds;LikeliHood;Posterior;',...
-    'geneID;geneSO;mut.pos in prot;mut in prot;mut in CDS; TAIR link;',...
+    'geneID;geneSO;mut.pos in prot;mut in prot;mut in CDS; TAIR link; eFP browser link;',...
     '[mt] tot reads;[mt] alt reads;[mt] SNP ratio;']);
 if obj.flagWT
     fprintf( fID, '[wt] tot reads;[wt] alt reads;[wt] SNP ratio;');
 end
+if ~isempty(obj.xRnaPresence)
+    fprintf( fID, 'RNA Presence;');
+    fprintf( fID, 'RNA Prior;');
+end
+
 
 fprintf(fID, '\n');
 
 for  cc = 1:obj.chrNumber% :-1:1
     chr = chrSortOrder(cc);
     cHitSubs = find(hitInds & obj.chromosome == chr);
-    [~, cxHitRanking] = sort( obj.xPosteriorNorm(cHitSubs), 1, 'descend');
+    [~, cxHitRanking] = sort( obj.(rankField)(cHitSubs), 1, 'descend');
     
     [~, cxHitRankingSubs] = sort( cxHitRanking, 1, 'ascend');
     cxTopHitSubs = cHitSubs(cxHitRanking);
     for ii = 1: min(numel(cxTopHitSubs), numPerChr)
-        currEffect = soDict.lookup(obj.geneSO(cxTopHitSubs(ii)));
-        %                      currEffect = terms{1}{so==obj.geneSO(cxTopHitSubs(ii))};
-        fprintf(fID, '%u;%u;%u;%u;%u;', obj.chromosome(cxTopHitSubs(ii)), obj.x(cxTopHitSubs(ii)), cxHitRanking(cxHitRankingSubs(ii)), chrRanking(chr), xRanks(cxTopHitSubs(ii)) );
-        fprintf(fID, '%g;%g;%g;', obj.xLogOdds(cxTopHitSubs(ii)), obj.xPsel(cxTopHitSubs(ii)),  obj.xPosteriorNorm(cxTopHitSubs(ii)));
-        fprintf(fID, '%s;%s;%u;', obj.geneID{cxTopHitSubs(ii)}, currEffect, obj.mutPosProt(cxTopHitSubs(ii)));
-        fprintf(fID, '%s;%s;', obj.mutProt{cxTopHitSubs(ii)}, obj.mutCDS{cxTopHitSubs(ii)});
-        fprintf(fID, '=HYPERLINK("http://arabidopsis.org/servlets/TairObject?name=%s&type=locus", "click here");', obj.geneID{cxTopHitSubs(ii)});
+        jj = cxTopHitSubs(ii);
+        currEffect = soDict.lookup(obj.geneSO(jj));
+        %                      currEffect = terms{1}{so==obj.geneSO(jj)};
+        fprintf(fID, '%u;%u;%u;%u;%u;', obj.chromosome(jj), obj.x(jj), cxHitRanking(cxHitRankingSubs(ii)), chrRanking(chr), xRanks(jj) );
+        fprintf(fID, '%g;%g;%g;', obj.xLogOdds(jj), obj.xPsel(jj),  obj.xPosteriorNorm(jj));
+        fprintf(fID, '%s;%s;%u;', obj.geneID{jj}, currEffect, obj.mutPosProt(jj));
+        fprintf(fID, '%s;%s;', obj.mutProt{jj}, obj.mutCDS{jj});
+        fprintf(fID, '=HYPERLINK("http://arabidopsis.org/servlets/TairObject?name=%s&type=locus", "go to TAIR");', obj.geneID{jj});
+        fprintf(fID, ['=HYPERLINK("', ...
+            'http://www.bar.utoronto.ca/efp/cgi-bin/efpWeb.cgi?dataSource=Developmental_Map&modeInput=Absolute&primaryGene=%s', ...
+            '&secondaryGene=None&modeMask_low=None&modeMask_stddev=None','", "go to eFP");'], obj.geneID{jj});
         
-               fprintf(fID, '%u;%u;%g;', obj.r(cxTopHitSubs(ii)), obj.q(cxTopHitSubs(ii)), obj.f(cxTopHitSubs(ii)));
+               fprintf(fID, '%u;%u;%g;', obj.r(jj), obj.q(jj), obj.f(jj));
         if obj.flagWT
-               fprintf(fID, '%u;%u;%g;', obj.rw(cxTopHitSubs(ii)), obj.qw(cxTopHitSubs(ii)), obj.fw(cxTopHitSubs(ii)));
+               fprintf(fID, '%u;%u;%g;', obj.rw(jj), obj.qw(jj), obj.fw(jj));
         end        
+        if ~isempty(obj.xRnaPresence)
+            fprintf( fID, '%g;', obj.xRnaPresence(jj));
+            fprintf( fID, '%g;', obj.xRnaPrior(jj));
+        end
         fprintf(fID, '\n');
     end
 end

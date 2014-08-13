@@ -1,4 +1,4 @@
-function [ sumLogP ] = calcMarginalDim( logP, varargin )
+function [ sumLogP ] = calcMarginal( logP, varargin )
 %calcMarginal calculates log-marginal given log-probabilities as input
 % taking care of numeric overflow
 %

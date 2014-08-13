@@ -61,9 +61,14 @@ classdef readDataVect < handle
         xPosteriorNorm
         cPostTot
         xPy
+        
     end
     
-    properties
+    properties (SetAccess = private, GetAccess = private) 
+    lastWarn = ''
+    end
+    
+    properties 
         xPriorRaw;
         xPrior;
         geneID;
@@ -71,6 +76,8 @@ classdef readDataVect < handle
         mutCDS;
         mutProt;
         mutPosProt;
+        xRnaPresence 
+        xRnaPrior
     end
     
     properties  (Dependent = true)
@@ -330,6 +337,7 @@ classdef readDataVect < handle
         
         
         function [obj, varargout] = run(obj, varargin)
+            obj.lastWarn = lastwarn;
             p = inputParser;
             addRequired(p, 'obj', @isobject);
             addOptional(p, 'chr',  0,  @(x)(isscalar(x) && x<= obj.chrNumber));
@@ -392,7 +400,18 @@ classdef readDataVect < handle
                     obj.logAlpha{chr} = [];
                     obj.logBeta{chr} = [];
                     
-                    fprintf(repmat('\b',1, msgLength));
+                    if strcmp(obj.lastWarn, lastwarn)
+                        obj.lastWarn = '';
+                    elseif ~isempty(lastwarn)
+                         obj.lastWarn = lastwarn;
+                    end
+                    
+                    if isempty(obj.lastWarn) || strcmp(obj.lastWarn, 'Directory already exists.')
+                        fprintf(repmat('\b',1, msgLength));
+                    else
+                        fprintf('\n')
+                    end
+                    
                     textA = sprintf('Alpha =\t%4.2f\t...', Alpha0);
                     fprintf(textA)
                     msgLength = numel(textA);
@@ -402,6 +421,10 @@ classdef readDataVect < handle
                 fprintf(repmat('\b',1, msgLength));
                 fprintf('\b\b\b took\t%4.2f\t s \t SNPs:\t%u \n',  toc(ticInit), obj.M(chr) )
             end % chr
+        end
+        
+        function includeRnaPresence(obj)
+           obj.xPrior(~obj.xRnaPresence) = -Inf;
         end
         %% find chromosome indices and other chromosome-related constants
         function obj = chrInds(obj)
@@ -450,8 +473,11 @@ classdef readDataVect < handle
                 if abs(obj.T{chr}(obj.T{chr}(:)<0)) > 1e-25
                     error('transition3D_expm:TNegInput', 'T matrix has negative values!')
                 else
+                    [~, msgid] = lastwarn;
+                    if ~strcmpi(msgid, 'transition3D_expm:TNegInput')
                     warning('transition3D_expm:TNegInput', ['T matrix has very small negative values (possibly numeric error)! \n',...
                         ' Replacing negative numbers by zeros'])
+                    end
                     obj.T{chr}(obj.T{chr}(:)<0) = 0;
                 end
             end
@@ -580,17 +606,32 @@ classdef readDataVect < handle
         
         function plotStemsLP(obj, varargin)
             markerSz = 4; 
-            plotChromosomes(obj, 'xPosteriorNorm', ...
-                'plotfun', @(x,y)stem(x,y, 'MarkerSize', markerSz, 'MarkerEdgeColor', 'r', 'linewidth', 0.8),... % 'MarkerEdgeColor', 'r', 
-                'exp10',false, 'yscale', 'lin', 'figure', 'new', varargin{:});
-                        
-            set(obj.prevLine(:, end), 'BaseValue',( obj.prevYLims(1)-2) );
+
+%             plotChromosomes(obj, 'xPosteriorNorm', ...
+%                 'plotfun', @(x,y)stem(x,y, 'MarkerSize', markerSz, 'MarkerEdgeColor', 'r', 'linewidth', 0.8),... % 'MarkerEdgeColor', 'r', 
+%                 'exp10',false, 'yscale', 'lin', 'figure', 'new', varargin{:});
+%                         
+%             set(obj.prevLine(:, end), 'BaseValue',( obj.prevYLims(1)-2) );
             
             plotChromosomes(obj, 'xPselNorm', ...
-                'plotfun', @(x,y)stem(x,y, 'MarkerSize', markerSz, 'MarkerEdgeColor', 'g', 'linewidth', 0.8),... % 'MarkerEdgeColor', 'r', 
-                'exp10',false, 'yscale', 'lin', 'yThr', 0, varargin{:});
+                'plotfun', @(x,y)stem(x,y, 'MarkerSize', markerSz-1, 'MarkerEdgeColor', 'g', 'linewidth', 0.8),... % 'MarkerEdgeColor', 'r', 
+                'exp10',false, 'yscale', 'lin', 'yThr', 0, 'figure', 'new', varargin{:});
             
             set(obj.prevLine(:, end), 'BaseValue',( obj.prevYLims(1)-2) );
+            
+            hits = (obj.xPosteriorNorm > obj.xPselNorm );
+            colors = bsxfun(@times, [0 .8 0], hits) + bsxfun(@times, [.2 1 .2], 0.5 * ~hits) ;
+            
+            plotChromosomes(obj, 'xPselNorm', ...
+                'plotfun', @(x,y,z)scatter(x,y, markerSz, colors(z)),... % 'MarkerEdgeColor', 'r', 
+                'exp10',false, 'yscale', 'lin',  varargin{:});
+
+            colors = bsxfun(@times, [.8 0 0], hits) ;% + bsxfun(@times, [1 0.2 0.2], 0.2 * ~hits) ;
+            plotChromosomes(obj, 'xPosteriorNorm', ...
+                'plotfun', @(x,y,z)scatter(x,y, markerSz, colors(z)),... % 'MarkerEdgeColor', 'r', 
+                'exp10',false, 'yscale', 'lin',  varargin{:});
+
+            
             set(obj.prevAxes(:, end), 'TickDir', 'out')
         end
         
@@ -611,6 +652,6 @@ classdef readDataVect < handle
             obj.prevYNames = {};
         end
         
-        printTopHits(obj, filename, numPerChr) ;
+        printTopHits(obj, filename, varargin) ;
     end
 end
