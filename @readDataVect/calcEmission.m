@@ -5,12 +5,11 @@ function obj = calcEmission(obj)
 %=   c = sum(E, 1)
 
 if obj.flagWT 
-    [mE, mC] = feval(obj.emissionHandle, double(obj.q), double(obj.r), obj.pop);
-    [wE, wC] = feval(obj.emissionHandle, double(obj.qw), double(obj.rw), obj.pop);
+    mE = feval(obj.emissionHandle, double(obj.q), double(obj.r), obj.pop);
+    wE = feval(obj.emissionHandle, double(obj.qw), double(obj.rw), obj.pop);
     obj.E = mE.* fliplr(wE);
-    obj.c = 1; % (mC + wC)./2;
 else
-    [obj.E, obj.c] = feval(obj.emissionHandle, double(obj.q), double(obj.r), obj.pop);
+    obj.E  = feval(obj.emissionHandle, double(obj.q), double(obj.r), obj.pop);
 end
 
 if obj.preSelectionGen
@@ -41,7 +40,7 @@ if ~isempty(obj.contrib)
     
    obj.E = bsxfun(@plus,...
            bsxfun(@times, obj.E, obj.contrib), ...
-           bsxfun(@times, Euniform, sumE.*(1-obj.contrib.* obj.c) ) ...
+           bsxfun(@times, Euniform, sumE.*(1-obj.contrib) ) ...
            );
     %         obj.E = bsxfun(@times, obj.E, contrib) + bsxfun(@times, Euniform, 1-contrib);
 end

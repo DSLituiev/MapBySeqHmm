@@ -52,9 +52,9 @@ fprintf( fID, ['chr;pos;rank w/i chr;chr rank;rank;',...
 if obj.flagWT
     fprintf( fID, '[wt] tot reads;[wt] alt reads;[wt] SNP ratio;');
 end
-if ~isempty(obj.xRnaPresence)
-    fprintf( fID, 'RNA Presence;');
-    fprintf( fID, 'RNA Prior;');
+if ~isempty(obj.xRnaPrior)
+    fprintf( fID, 'Array Prior / mean:%1.4f;', nanmean(obj.xArrayPrior));
+    fprintf( fID, 'RNA Prior / mean:%1.4f;', nanmean(obj.xRnaPrior));
 end
 
 
@@ -84,9 +84,9 @@ for  cc = 1:obj.chrNumber% :-1:1
         if obj.flagWT
                fprintf(fID, '%u;%u;%g;', obj.rw(jj), obj.qw(jj), obj.fw(jj));
         end        
-        if ~isempty(obj.xRnaPresence)
-            fprintf( fID, '%g;', obj.xRnaPresence(jj));
-            fprintf( fID, '%g;', obj.xRnaPrior(jj));
+        if ~isempty(obj.xRnaPrior)
+            fprintf( fID, '%g;', obj.xArrayPrior(jj) );
+            fprintf( fID, '%g;', obj.xRnaPrior(jj) );
         end
         fprintf(fID, '\n');
     end

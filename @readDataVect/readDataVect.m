@@ -61,7 +61,7 @@ classdef readDataVect < handle
         xPosteriorNorm
         cPostTot
         xPy
-        
+        f0
     end
     
     properties (SetAccess = private, GetAccess = private) 
@@ -78,6 +78,7 @@ classdef readDataVect < handle
         mutPosProt;
         xRnaPresence 
         xRnaPrior
+        xArrayPrior
     end
     
     properties  (Dependent = true)
@@ -203,6 +204,7 @@ classdef readDataVect < handle
         end
         
         function obj = calcDx( obj, fh )
+            obj.dx = zeros(numel(obj.x) , 1);
             for cc = obj.chrNumber: -1:1
                 inds = logical(cc == obj.chromosome);
                 dxRaw = [NaN; diff(double(obj.x(inds)))];
@@ -212,8 +214,23 @@ classdef readDataVect < handle
             end
         end
         %% filtering
-        function obj = filter(obj, field, fh)
+        function obj = filter(obj, field, fh, varargin)
             inds = fh(obj.(field));
+            if ~isprop(obj, field)
+                 error('readDataVect:filter:noFieldFound', 'no field  "%s" found!', field)
+            end
+            if isempty(obj.(field) )
+                 error('readDataVect:filter:noFieldFound', 'the field  "%s" is empty! \n Cannot perform filtering', field)
+            end
+            if sum(inds) == 0
+                error('readDataVect:filter:empty', 'no entries are left after filtering')
+            end
+            if nargin>3
+                field2 = varargin{1};
+                fh2 = varargin{2};
+                inds = inds &  fh2(obj.(field2));
+            end
+            
             obj.chromosome = obj.chromosome(inds);
             obj.x = obj.x(inds);
             obj.q = obj.q(inds);
@@ -235,47 +252,31 @@ classdef readDataVect < handle
             obj.xLogOdds = zeros(obj.Mtot, 1);
             obj.E = [];
             obj.contrib = [];            
-            obj.dx = [];
+            obj.calcDxMin()
             
             
             if ~isempty(obj.xPrior)
-            obj.xPrior = obj.xPrior(inds);            
-            obj.xPosterior = -Inf(obj.Mtot, 1);
-            obj.xPosteriorNorm = -Inf(obj.Mtot, 1);
-            end
-
-            if ~isempty(obj.qual)
-                obj.qual = obj.qual(inds);
+                obj.xPrior = obj.xPrior(inds);
+                obj.xPosterior = -Inf(obj.Mtot, 1);
+                obj.xPosteriorNorm = -Inf(obj.Mtot, 1);
             end
             
-            if ~isempty(obj.notaRepeat)
-                obj.notaRepeat = obj.notaRepeat(inds);
-            end
+            optFields = {'qual', 'notaRepeat', 'geneID', 'geneSO', 'mutCDS',...
+                'mutProt', 'mutPosProt', 'xRnaPrior', 'xRnaPresence', 'xArrayPrior'};
             
-            if ~isempty(obj.geneID)
-                obj.geneID = obj.geneID(inds);
-            end
-            
-            if ~isempty(obj.geneSO)
-                obj.geneSO = obj.geneSO(inds);
-            end
-            
-            if ~isempty(obj.mutCDS)
-                obj.mutCDS = obj.mutCDS(inds);
-            end
-            
-            if ~isempty(obj.mutProt)
-                obj.mutProt = obj.mutProt(inds);
-            end
-            
-            if ~isempty(obj.mutPosProt)
-                obj.mutPosProt = obj.mutPosProt(inds);
+            for ii = numel(optFields):-1:1
+                filterField(obj, optFields{ii} , inds);
             end
             
             obj = chrInds(obj);
             
         end
-        
+        %%
+        function filterField(obj, fieldName, inds)
+           if ~isempty(obj.(fieldName))
+                obj.(fieldName) = obj.(fieldName)(inds);
+           end
+        end
         %% chromosome retrieval
         function subobj = getChromosome(obj, cc, varargin)
             if nargin>2 && any(strcmpi('old', varargin))
@@ -344,6 +345,11 @@ classdef readDataVect < handle
             addOptional(p, 'plFlag',  '',  @ischar );
             %           addParamValue(p,     'exp10',             false, @isscalar);
             parse(p, obj, varargin{:});
+            
+            if isempty(obj.Alpha)
+                obj.Alpha = 1;                
+                fprintf('setting Alpha to 1\n')
+            end
             
             if  p.Results.chr>0
                 chrV = p.Results.chr;

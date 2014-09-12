@@ -2,82 +2,200 @@ close all; clear all; clc;
 dbclear if warning
 tic
 
-DATA_PATH = '/media/Processing/seq/data';
-% DATA_PATH = './data';
-USERFNCT_PATH = '/media/Processing/';
-addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions/binomial') );
-addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions/mtimesx'));
-addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions/MinMaxSelection'));
-addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions/newtonraphson'));
-addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions')); savepath;
-addpath('./utilites');
-addpath('./betabinomial');
-% addpath('..\@chromProb');
 
-%=       provide the reference ID, which is the name of the csv file without '.csv'
+DATA_PATH = '/media/Processing/seq/data';
+% DATA_PATH = '/media/Processing/seq/olddata';
+% DATA_PATH = './data';
+USERFNCT_PATH = '/media/Processing/MATLABuserfunctions';
+% addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions/binomial') );
+addpath(USERFNCT_PATH);
+addpath(fullfile(USERFNCT_PATH, 'mtimesx'));
+addpath(fullfile(USERFNCT_PATH, 'MinMaxSelection'));
+addpath(fullfile(USERFNCT_PATH, 'newtonraphson'));
+ savepath;
+addpath('./utilites');
+addpath('./plotting');
+addpath('./emission');
+
+%=  provide the reference ID, which is the name of the csv file without '.csv'
 %= together with the backround genotype ID
 %= known positions of the causative SNP can be also provided here for
 %= further visualization
-% dataID = 'ABD159-rmdup-clipOverlap-q20-freebayes'; chr0 = 2; x0 = 17521246; % bkgrID = 'ABD241-rmdup-clipOverlap-freebayes';
-% dataID = 'ABD173-rmdup-clipOverlap-freebayes'; chr0 = 3 ; x0 = 1619248; % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';
 
+%= number of plants:
+dataID = '20140514.A-MO7-bwa-rmdup-clipOverlap-q20-freebayes-ems-annotation-rna'; N = 181; chr0 = 1;
+% dataID = 'MO8-rmdup-clipOverlap-q20-freebayes-ems-annotation-array-rna'; N = 278;  chr0 = 5;
+% dataID = 'MO7-rmdup-clipOverlap-q20-freebayes-ems-annotation-array-rna'; N = 181; chr0 = 1;
+% dataID = '73-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
 
-% dataID = 'HL10-rmdup-clipOverlap-q20-freebayes';  chr0 =  3 ;  x0 =  16473265;
- dataID = 'MO7_mutant_pool-rmdup-clipOverlap-q20-freebayes-ems-annotation-repfilt';
- 
-% dataPath = '/media/Processing/seq/data/MO8_mutant_pool-rmdup-clipOverlap-q20-freebayes-ems-annotation-repfilt.csv';
+% dataID = '39-bwa-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
+% dataID = '91-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
 
-% dataPath = '/media/Processing/seq/data/MO8_WT_pool-rmdup-clipOverlap-q20-freebayes-ems-annotation-repfilt.csv';
-%  dataID = 'HL7_Paired-rmdup-clipOverlap-q20-freebayes'; x0 = 5672441; chr0 = 1;
-% dataID = 'HL7_Paired-ngm-rmdup-clipOverlap-freebayes'; x0 = 5672441; chr0 = 1;
-% dataID = 'HL7_Paired-rmdup-clipOverlap-mpileup'; x0 = 5672441; chr0 = 1;
+% dataID = 'ABD159-rmdup-clipOverlap-q20-freebayes-ems-annotation'; chr0 = 2; x0 = 17521246;  N = 100; % bkgrID = 'ABD241-rmdup-clipOverlap-freebayes';
+% dataID = 'ABD173-rmdup-clipOverlap-q20-freebayes-ems-annotation'; chr0 = 3 ; x0 = 1619248;  N = 50;  % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';
+
+% dataID = 'MO8_mutant_pool-rmdup-clipOverlap-q20-freebayes-ems-annotation-repfilt';
+
+% dataID = 'HL10-rmdup-clipOverlap-q20-freebayes-ems-annotation';  chr0 =  3 ;  x0 =  16473265;N = 50;
+
+%  dataID = 'HL7_Paired-rmdup-clipOverlap-q20-freebayes-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
+% dataID = 'HL7_Paired-ngm-rmdup-clipOverlap-freebayes-ems-annotation-repfilt'; x0 = 5672441; chr0 = 1;
+% dataID = 'HL7_Paired-rmdup-clipOverlap-mpileup-ems-annotation-repfilt'; x0 = 5672441; chr0 = 1;
 
 disp(['=======  Processing data from the run ''', dataID, ''' ======='])
+%= and genetic distance in cM between them)
 
 %%
-% mkdir(fullfile('figures',dataID))
+
+mkdir(fullfile('figures',dataID))
 %=       load the recombination map (contains positions of the markers
 %= and genetic distance in cM between them)
 
 %= construct the path to the (primary experimental) data file
 dataPath = fullfile(DATA_PATH, [dataID, '.csv'] );
-
 %= extract the refenece reads if the reference ID is given:
-clear AR1 AR z y
-% [AR, annotation] = subtractBackGroundGenotype(dataPath);
- [AR, ~] = readSequencingDataCsv(dataPath, 'noannotation');
-%% general experimental constants:
+clear AR 
+
+% [AR, ~] = readSequencingDataCsv(dataPath, 'noannotation');
+
+[AR, annotation] = subtractBackGroundGenotype(dataPath);
+% 
+% [AR.xPrior, AR.maxHitGene, AR.maxHitEffect,...
+%     AR.positionCDS, AR.effectAA, AR.effectCodone] = constructPriorStr(annotation);
+
+% figure
+% myhist(50, AR.f, 'r')
+% hold all
+% myhist(50, AR.f(AR.f>0.1), 'g')
+
+AR = AR.filter('q', @(x)(x>7)); % mutant readsclose all; clear all; clc;
+dbclear if warning
+tic
+
+
+DATA_PATH = '/media/Processing/seq/data';
+% DATA_PATH = '/media/Processing/seq/olddata';
+% DATA_PATH = './data';
+USERFNCT_PATH = '/media/Processing/MATLABuserfunctions';
+% addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions/binomial') );
+addpath(USERFNCT_PATH);
+addpath(fullfile(USERFNCT_PATH, 'mtimesx'));
+addpath(fullfile(USERFNCT_PATH, 'MinMaxSelection'));
+addpath(fullfile(USERFNCT_PATH, 'newtonraphson'));
+ savepath;
+addpath('./utilites');
+addpath('./plotting');
+addpath('./emission');
+
+%=  provide the reference ID, which is the name of the csv file without '.csv'
+%= together with the backround genotype ID
+%= known positions of the causative SNP can be also provided here for
+%= further visualization
+
 %= number of plants:
-N = 50;
-AR.pop = N;
+dataID = '20140514.A-MO7-bwa-rmdup-clipOverlap-q20-freebayes-ems-annotation-rna'; N = 181; chr0 = 1;
+% dataID = 'MO8-rmdup-clipOverlap-q20-freebayes-ems-annotation-array-rna'; N = 278;  chr0 = 5;
+% dataID = 'MO7-rmdup-clipOverlap-q20-freebayes-ems-annotation-array-rna'; N = 181; chr0 = 1;
+% dataID = '73-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
+
+% dataID = '39-bwa-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
+% dataID = '91-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
+
+% dataID = 'ABD159-rmdup-clipOverlap-q20-freebayes-ems-annotation'; chr0 = 2; x0 = 17521246;  N = 100; % bkgrID = 'ABD241-rmdup-clipOverlap-freebayes';
+% dataID = 'ABD173-rmdup-clipOverlap-q20-freebayes-ems-annotation'; chr0 = 3 ; x0 = 1619248;  N = 50;  % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';
+
+% dataID = 'MO8_mutant_pool-rmdup-clipOverlap-q20-freebayes-ems-annotation-repfilt';
+
+% dataID = 'HL10-rmdup-clipOverlap-q20-freebayes-ems-annotation';  chr0 =  3 ;  x0 =  16473265;N = 50;
+
+%  dataID = 'HL7_Paired-rmdup-clipOverlap-q20-freebayes-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
+% dataID = 'HL7_Paired-ngm-rmdup-clipOverlap-freebayes-ems-annotation-repfilt'; x0 = 5672441; chr0 = 1;
+% dataID = 'HL7_Paired-rmdup-clipOverlap-mpileup-ems-annotation-repfilt'; x0 = 5672441; chr0 = 1;
+
+disp(['=======  Processing data from the run ''', dataID, ''' ======='])
 %= and genetic distance in cM between them)
-load ChrMap
+
+%%
+
+mkdir(fullfile('figures',dataID))
+%=       load the recombination map (contains positions of the markers
+%= and genetic distance in cM between them)
+
+%= construct the path to the (primary experimental) data file
+dataPath = fullfile(DATA_PATH, [dataID, '.csv'] );
+%= extract the refenece reads if the reference ID is given:
+clear AR 
+
+% [AR, ~] = readSequencingDataCsv(dataPath, 'noannotation');
+
+[AR, annotation] = subtractBackGroundGenotype(dataPath);
+% 
+% [AR.xPrior, AR.maxHitGene, AR.maxHitEffect,...
+%     AR.positionCDS, AR.effectAA, AR.effectCodone] = constructPriorStr(annotation);
+
+% figure
+% myhist(50, AR.f, 'r')
+% hold all
+% myhist(50, AR.f(AR.f>0.1), 'g')
+
+AR = AR.filter('q', @(x)(x>7)); % mutant reads
+AR = AR.filter('f', @(x)(x<1)); % SNP ratio
+
+AR.calcDxMin;
+AR = AR.filter('dx', @(x)(x>10), 'chromosome', @(x)(x==1)); % 
+AR = AR.filter('dx', @(x)(x<1e4)); % 
+
+
+
+AR.calcDxMin;
+AR.visStat;
+fig(gcf, 'width', 24)
+exportfig(gcf, fullfile('figures', dataID,'qualityCtrl'), 'format','eps', 'color', 'rgb')
+
+% visualizeAnnotationStat(annotation)
+
+
+
+% AR.unmix('plot');
+
+load('./reference/ChrMap.mat')
 AR.chrMap = ChrMap;
 clear ChrMap;
+%% general experimental constants:
 
+AR.pop = N;
+%%
+if ~AR.flagWT
+    AR.unmix();
+    [theta, lambda1] = runSimpleEM_BetaBinomAndUniform(AR.pop.Pstat, double(AR.q),...
+        double(AR.r), N, 'v',...
+        'contribution', AR.contrib ,'errTol', 1e-5, 'contribution', AR.contrib);
+else
+    [theta, lambda1] = runSimpleEM_BetaBinomAndUniform(AR.pop.Pflat, double([AR.q; AR.qw]),...
+        double([AR.r; AR.rw]), N, 'v',...
+        'contribution', AR.contrib ,'errTol', 1e-4);
+end
+% % 
+% theta = 1e-2;
+% lambda1 = 1;
 
-AR.filter('q', @(x)(x>7))
-
-AR.filter('f', @(x)(x>.01))
-
-AR.visStat;
-
-AR = calcDxMin(AR);
-
-% AR = unmix(AR);
-
-
-
-AR.Mtot
- theta = 2e-2;
- lambda1 = 1;
+% AR.includeRnaPresence()
 
 AR.emissionHandle = @(q, r, study)emissionMixBetaBinomial(q, r, AR.pop, theta, lambda1);
+% AR.emissionHandle = @(q, r, study)emissionMixBetaBinomial(q, r, AR.pop.N, theta, gi1(1:AR.Mtot));
 
+%  emissionHandle = @(q, r, study)emissionBetaBinomial(q, r, study, theta);
+% AR.emissionHandle = @(qq, rr, ff)emissionk0(qq, rr, AR.pop);
+% AR.contrib = ones(size(AR.x));
+
+% AR.Alpha = 1./(0:0.01:1);
 AR.Alpha = 17;
-
+% 
+% load( 'emission_fun.mat')
+%  AR.E = E;
+%  AR.contrib = contrib;
+%  AR.contrib = 1;really
 AR.calcEmission;
-
 AR.run();
 
 AR.clearPlots;
@@ -88,49 +206,60 @@ AR.plotChromosomes('xPsel', 'yscale', 'lin', 'norm', true, 'figure', 'new');
 
 AR.plotChromosomes('xPstat', 'yscale', 'lin', 'norm', true);
 
+
+
 % AR.calcLogOdds;
 AR.plotChromosomes('xLogOdds', 'yscale', 'lin', 'figure', 'new', 'yThr', 0);
 
+fig(gcf, 'width', 24)
+exportfig(gcf, fullfile('figures', dataID,'LogLiOdds'), 'format','eps', 'color', 'rgb')
 
-AR.plotChromosomes('f', 'yscale', 'lin', 'figure', 'new', 'yThr', 0.25);
-
-
-
-
-return
-
-figure;
-myhist100(50, AR.f,  'r')
-hold all
-myhist100(50, AR.f(AR.q>5),  'b')
-myhist100(50, AR.f(AR.q>7),  'c')
-myhist100(50, AR.f(AR.q>10),  'g')
+AR.plotStemsLP( 'ylim', [-20,0])
+fig(gcf, 'width', 24)
+exportfig(gcf, fullfile('figures', dataID, 'LH-Posterior'), 'format','eps', 'color', 'rgb')
 
 
-figure;
-myhist(50, AR.f,  'r')
-hold all
-myhist(50, AR.f(AR.q>5),  'b')
-myhist(50, AR.f(AR.q>7),  'c')
-myhist(50, AR.f(AR.q>10),  'g')
+
+AR.plotChromosomes('xPselNorm', 'yscale', 'lin', 'figure', 'new', 'yThr', 0);
+
+AR.plotChromosomes('xPosteriorNorm', 'yscale',  'lin','figure', 'old', 'yThr', 0); %, 'ylim', [-10,0]);
+
+
+AR.plotChromosomes('f', 'yscale', 'lin', 'figure', 'new', 'yThr', 0, 'plotfun', @(x,y)plot(x,y, 'rx'));
+
+AR.f0 = 0.25;
+AR.plotChromosomes('f0', 'yscale', 'lin', 'figure', 'old', 'yThr', 0, 'plotfun', @(x,y)plot(x,y, '-', 'color', [0,.5,0]));
+AR.f0 = 0.5;
+AR.plotChromosomes('f0', 'yscale', 'lin', 'figure', 'old', 'yThr', 0, 'plotfun', @(x,y)plot(x,y, '-', 'color', [0, 0, .5]));
+
+
+
+if AR.flagWT
+    AR.plotChromosomes('fw', 'yscale', 'lin', 'figure', 'old', 'yThr', 0, 'plotfun', @(x,y)plot(x,y, 'gx'));
+end
+set(AR.prevAxes(:,end), 'box','on')
+fig(gcf, 'width', 24)
+exportfig(gcf, fullfile('figures', dataID, 'SNP Ratio'), 'format','eps', 'color', 'rgb')
+
+% AR.plotChromosomes('contrib', 'yscale', 'lin', 'figure', 'new', 'yThr', 0);
+
+
+figure
+plot(AR.x(AR.chromosome == chr0)*1e-6, AR.dx(AR.chromosome == chr0), 'rx')
 set(gca, 'yscale', 'log')
 
-figure;
-myhist100(50, AR.f,  'r')
-hold all
-myhist100(50, AR.f(AR.f>.05),  'g')
+%%
+%%
 
-figure;
-hist(log10(AR.r), 50)
+% AR.plotStems('xPosteriorNorm', 'figure', 'new');
+% AR.plotStems('xPselNorm', 'yThr', 0);
+numberOfHits = 2e6;
 
+AR.printTopHits(fullfile('figures',dataID, [dataID, '-out.csv']), numberOfHits, 'xLogOdds', 'cutoffValue', 0)
 
-figure;
-hist(AR.f(AR.q>10& AR.r <=100), 50)
+% 
+% E = AR.E;
+% contrib = AR.contrib;
+% save('emission_obj', 'E', 'contrib')
 
-for chr =5:-1:1
-figure('name', sprintf('chr %u', chr));
-plot(AR.x(AR.qual>.0 & AR.q>3 & AR.f<0.75 & AR.chromosome == chr), AR.f(AR.qual>.0 & AR.q>3 & AR.f<0.75 & AR.chromosome == chr))
-hold on
-plot([min(AR.x), max(AR.x)], .5*[1,1], 'r-')
-ylim([0,1])
-end
+finishing_beep(1, .2, 3)

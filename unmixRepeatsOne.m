@@ -130,6 +130,10 @@ if any(dataStruct.contrib > 1)
     warning('CumMatr:ENegInput', 'contrib > 1 !')
 end
 
+if isempty(dataStruct.notaRepeat)
+   dataStruct.notaRepeat = true(numel(logX1),1) ;
+end
+
 %% assign the mean values
 mu.(firstParam) =  mixtObj.mu(:,1) ;
 
@@ -233,7 +237,8 @@ f(4) = figure('name', 'mixture: empirical PDFs');
     plot(mixtObj.mu(2), 0, 'wx',  'MarkerSize', 10,  'LineWidth', 4)
     hold all
     plot(mixtObj.mu(1), 0, 'kx', 'MarkerSize', 8, 'LineWidth', 2)
-    plot(mixtObj.mu(2), 0, 'kx', 'MarkerSize', 8,  'LineWidth', 2)
+    plot(mixtObj.mu(2), 0, 'kx', 'MarkerSize', 8,  'LineWidth', 2)    
+    plot(median(mixtObj.mu(1:2)), 0, 'k+', 'MarkerSize', 8,  'LineWidth', 2)
 %     set(gca, 'ylim', [0, yMax])
    set(gca, 'ylim', [0, max(0.12, yMax./sum(yh) )])
    set(gca, 'xlim', [0, 6])
@@ -244,7 +249,7 @@ f(5) = figure('name', 'mixture: empirical CDFs');
     hold all
     plot(mixtObj.mu(1), 0, 'kx', 'MarkerSize', 8, 'LineWidth', 2)
     plot(mixtObj.mu(2), 0, 'kx', 'MarkerSize', 8,  'LineWidth', 2)
-    plot(median(mixtObj.mu(1:2)), 0, 'kx', 'MarkerSize', 8,  'LineWidth', 2)
+    plot(median(mixtObj.mu(1:2)), 0, 'k+', 'MarkerSize', 8,  'LineWidth', 2)
    set(gca, 'ylim', [0, 1])
    set(gca, 'xlim', [0, 6])
    xlabel( firstParam )

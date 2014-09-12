@@ -6,7 +6,7 @@ tic
 DATA_PATH = '/media/Processing/seq/data';
 % DATA_PATH = '/media/Processing/seq/olddata';
 % DATA_PATH = './data';
-USERFNCT_PATH = '/media/Processing/MATLABuserfunctions';
+USERFNCT_PATH = '/dependencies';
 % addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions/binomial') );
 addpath(USERFNCT_PATH);
 addpath(fullfile(USERFNCT_PATH, 'mtimesx'));
@@ -14,23 +14,23 @@ addpath(fullfile(USERFNCT_PATH, 'MinMaxSelection'));
 addpath(fullfile(USERFNCT_PATH, 'newtonraphson'));
  savepath;
 addpath('./utilites');
-% addpath('./betabinomial');
 addpath('./plotting');
 addpath('./emission');
-% addpath('.\@chromProb');
-% addpath('.');
 
-%=       provide the reference ID, which is the name of the csv file without '.csv'
+%=  provide the reference ID, which is the name of the csv file without '.csv'
 %= together with the backround genotype ID
 %= known positions of the causative SNP can be also provided here for
 %= further visualization
 
 %= number of plants:
 
-dataID = 'MO8-rmdup-clipOverlap-q20-freebayes-ems-annotation-rna'; N = 278;  chr0 = 5;
-% dataID = 'MO7-rmdup-clipOverlap-q20-freebayes-ems-annotation-rna'; N = 181; chr0 = 1;
-% dataID = '73-ngm-rmdup-clipOverlap-q20';
-% dataID = '39-ngm-rmdup-clipOverlap-q20-ems-annotation';
+% dataID = 'MO8-rmdup-clipOverlap-q20-freebayes-ems-annotation-array-rna'; N = 278;  chr0 = 5;
+% dataID = 'MO7-rmdup-clipOverlap-q20-freebayes-ems-annotation-array-rna'; N = 181; chr0 = 1;
+dataID = 'CH/73-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; N = 100;
+% dataID = 'CH/91-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; N = 100;
+% dataID = '39-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
+% dataID = '91-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
+
 % dataID = 'ABD159-rmdup-clipOverlap-q20-freebayes-ems-annotation'; chr0 = 2; x0 = 17521246;  N = 100; % bkgrID = 'ABD241-rmdup-clipOverlap-freebayes';
 % dataID = 'ABD173-rmdup-clipOverlap-q20-freebayes-ems-annotation'; chr0 = 3 ; x0 = 1619248;  N = 50;  % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';
 
@@ -69,7 +69,7 @@ hold all
 myhist(50, AR.f(AR.f>0.05), 'g')
 
 AR = AR.filter('q', @(x)(x>7)); % mutant reads
-AR = AR.filter('f', @(x)(x<1)); % SNP ratio
+% AR = AR.filter('f', @(x)(x<1)); % SNP ratio
 
 AR.calcDxMin;
 AR.visStat;
@@ -99,19 +99,20 @@ else
         double([AR.r; AR.rw]), N, 'v',...
         'contribution', AR.contrib ,'errTol', 1e-4);
 end
-% 
+% % 
 % theta = 1e-2;
 % lambda1 = 1;
 
 % AR.includeRnaPresence()
 
 AR.emissionHandle = @(q, r, study)emissionMixBetaBinomial(q, r, AR.pop, theta, lambda1);
+% AR.emissionHandle = @(q, r, study)emissionMixBetaBinomial(q, r, AR.pop.N, theta, gi1(1:AR.Mtot));
 
 %  emissionHandle = @(q, r, study)emissionBetaBinomial(q, r, study, theta);
 % AR.emissionHandle = @(qq, rr, ff)emissionk0(qq, rr, AR.pop);
 % AR.contrib = ones(size(AR.x));
 
-% AR.Alpha = 1./(0:0.05:1);
+% AR.Alpha = 1./(0:0.01:1);
 AR.Alpha = 17;
 % 
 % load( 'emission_fun.mat')

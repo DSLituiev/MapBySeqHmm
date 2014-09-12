@@ -38,7 +38,7 @@ if ~isempty(header{20}{:})
     flagRNA = true;
     dataPattern = ['%s %u %f %s %s %s',...
                   ' %u %s %s %s %u %u',...
-                  ' %u %u %u %u %u %u %u8 %f %f'];
+                  ' %u %u %u %u %u %u %f %f %f'];
 elseif ~isempty(header{16}{:}) % 17, 18
     flagWT = true;
     dataPattern = ['%s %u %f %s %s %s',...
@@ -106,7 +106,7 @@ Reads.xPrior = log10(Reads.xPrior);
 
 if flagRNA
     % Reads.xPrior(~logical(data{19})) = -Inf;
-    Reads.xRnaPresence = double(data{19});
+    Reads.xArrayPrior = double(data{19});
     Reads.xRnaPrior = double(data{20});
 end
 

@@ -9,12 +9,14 @@ addpath('D:\MATLABuserfunctions');
 %= add the parent path
 addpath(cd(cd('..')))
 
+addpath('../emission')
+
 %% == Initialize parameters:
 par.Nplants = 50;
 % par.SNPperPlant = 10;
 par.r_expected = 12; 
 par.FalsePositives = 0;
-par.SamplingPoints = 5;
+par.SamplingPoints = 20;
 par.cSNPpos = .5;
 par.Selection = true;
 par.T_max = 1; %<= maximal length of the path
@@ -47,8 +49,8 @@ end
 figure('name', fname) 
 stairs(tChr, fChr, 'b', 'linewidth', 2.5)
 hold on
-plot(tSampling, fAtSamplingPoints, 'rs-','markersize',3,'MarkerFaceColor','r')
-plot(tSampling, 2*par.Nplants*q./r, 'go','markersize',3,'MarkerFaceColor','g')
+plot(tSampling, fAtSamplingPoints, 'rs-','markersize',8,'MarkerFaceColor','r')
+plot(tSampling, 2*par.Nplants*q./r, 'go','markersize',8,'MarkerFaceColor','g')
 xlim([0, T_max])
 ylim([0, 10*round(.15 * par.Nplants)])
 xlabel('linkage, morgans')
@@ -57,7 +59,21 @@ legend({'k: chromosome chunks'; 'k: SNP genotyping'; 'f: mutant read frequency x
 
 %% Forward-backward
 tic
-logPobsDy = runFB(tSampling, q, r,  par.Nplants);
+
+
+AR = readDataVect(ones(1, numel(tSampling)), tSampling ,q,r);
+ChrMap(1).nt = [0 1];
+ChrMap(1).cM = [0 100];
+
+AR.chrMap = ChrMap;
+
+AR.pop = par.Nplants;
+AR.Alpha = 17;
+AR.emissionHandle = @(qq, rr, ff)emissionk0(qq, rr, AR.pop);
+AR.calcEmission;
+AR.run();
+
+logPobsDy = AR.xPsel;
 fprintf('F-B algorithm took\t%2.2g\ts\n', toc)
 %% == plot
 [~, maxind] = max(logPobsDy);
@@ -71,7 +87,7 @@ plot(tSampling(maxind), max(logPobsDy), 'bv')
 plot(t0, max(logPobsDy), 'r^')
 
 xlim([0, par.T_max])
-ylim([ floor(min(logPobsDy)), ceil(max(logPobsDy))] )
+ylim([ floor(min(logPobsDy(~isinf(logPobsDy)))), ceil(max(logPobsDy))] )
 
 
 fprintf('t0 predicted:\t%g\n', tSampling(maxind))

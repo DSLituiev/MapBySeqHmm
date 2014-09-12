@@ -78,13 +78,18 @@ function  plotChromosomes(obj, fieldName, varargin)
                     spl(chr) = subplot(double(obj.chrNumber), 1, double(chr));
                 end
                 
-                if isempty(p.Results.select)
+                if isscalar(obj.(fieldName))
+                    xValues = obj.(p.Results.xname)(inds);
+                    xValues = xValues([1,end]);
+                    yValues = [1, 1] * obj.(fieldName);
+                elseif isempty(p.Results.select)
                     xValues = obj.(p.Results.xname)(inds);
                     yValues = obj.(fieldName)(inds);
                 else
                     xValues = obj.(p.Results.xname)(p.Results.select);
                     yValues = obj.(fieldName)(p.Results.select);
                 end
+               
                 
                 if p.Results.norm
                     yValues = yValues + obj.cNormConst(chr);
@@ -151,7 +156,11 @@ function  plotChromosomes(obj, fieldName, varargin)
             
             %% set the x-length in correspondence if ( p.Results.xname == 'x' )
             %        [left bottom width height]
-            splpos = cell2mat(get(spl,'position'));
+            if ~isscalar(spl)
+                splpos = cell2mat(get(spl,'position'));
+            else
+                splpos = get(spl,'position');
+            end
             if ~(size(p.Results.xlim,2) == 2)
                 if strcmpi(p.Results.xname,'x')
                     splpos(:,3) = max(splpos(:,3)).* ([maxXMb(:)])'./max([maxXMb(:)]);
