@@ -36,12 +36,13 @@ if ~isempty(obj.contrib)
     %
     %     obj.E = bsxfun(@times, E, 1-(1-contrib).*(1-c)) + bsxfun(@times, Euniform, (1-contrib).*(1-c));
     
-   sumE = sum(obj.E, 2);
+   sumE = sum(obj.E, 2)./obj.pop.Np;
     
    obj.E = bsxfun(@plus,...
            bsxfun(@times, obj.E, obj.contrib), ...
            bsxfun(@times, Euniform, sumE.*(1-obj.contrib) ) ...
            );
+   
     %         obj.E = bsxfun(@times, obj.E, contrib) + bsxfun(@times, Euniform, 1-contrib);
 end
 

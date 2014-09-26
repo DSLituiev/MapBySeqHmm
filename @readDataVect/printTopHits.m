@@ -40,7 +40,7 @@ xHitRanking = uint32(tiedrank(- obj.(rankField)(hitInds) ));
 
 xRanks = zeros(size(hitInds), 'double');
 xRanks(hitInds) = xHitRanking;
-fID = fopen(filename, 'wt' );
+fID = fopen(filename , 'wt' );
 if fID == -1
     error('printTopHits:wrongFileID','the file cannot be created')
 end

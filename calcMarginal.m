@@ -55,7 +55,7 @@ else
 end
 
 if any(isnan(sumLogP))
-     warning('calcMarginal:NaN', '%u entries out of %u are NaN', sum(isnan(sumLogP)), numel(sumLogP));
+     warning('calcMarginal:NaN', '%u entries out of %u are NaN', sum(isnan(sumLogP(:))), numel(sumLogP));
 %    warning('calcMarginal:NaN', 'the sum is NaN in the entries %u', find(isnan(sumLogP))) 
 end
 

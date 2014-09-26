@@ -1,4 +1,4 @@
-function  plotChromosomes(obj, fieldName, varargin)
+function  varargout = plotChromosomes(obj, fieldName, varargin)
             p = inputParser;
             addRequired(p, 'obj',@isobject);
             addRequired(p, 'fields', @ischar);
@@ -15,7 +15,7 @@ function  plotChromosomes(obj, fieldName, varargin)
             addParamValue(p,      'ylim',                   []);
             addParamValue(p, 'linestyle',                  '-',  @ischar);
             addParamValue(p,   'plotfun',                @plot,  @(x)isa(x,'function_handle'));
-            addParamValue(p,    'select',                   '',  @ischar );
+            addParamValue(p,    'select',                   [],  @(x)(islogical(x)||isempty(x)) );
             addParamValue(p,   'linewidth',                1 , @isscalar);
             addParamValue(p,    'norm',                false , @isscalar);
             addParamValue(p,    'yThr',                NaN , @isscalar);
@@ -70,6 +70,10 @@ function  plotChromosomes(obj, fieldName, varargin)
             minY = Inf;
             for chr = 1:obj.chrNumber
                 inds = (obj.chromosome == chr); 
+%                 if ~sum(inds)
+%                     obj.prevLine(chr, lserClmn) = NaN;
+%                     continue
+%                 end
                 
                 if flagFigOld
                     spl(chr) =   obj.prevAxes(chr, end);
@@ -78,25 +82,39 @@ function  plotChromosomes(obj, fieldName, varargin)
                     spl(chr) = subplot(double(obj.chrNumber), 1, double(chr));
                 end
                 
-                if isscalar(obj.(fieldName))
+                if isempty(p.Results.select)
                     xValues = obj.(p.Results.xname)(inds);
-                    xValues = xValues([1,end]);
-                    yValues = [1, 1] * obj.(fieldName);
-                elseif isempty(p.Results.select)
-                    xValues = obj.(p.Results.xname)(inds);
-                    yValues = obj.(fieldName)(inds);
+                    
+                    if isscalar(obj.(fieldName)) && numel(xValues)>0                        
+                        yValues = [1, 1] * obj.(fieldName);
+                        if (p.Results.xname == 'x')
+                             xValues = [0; xValues(end)];
+                        else
+                            xValues = xValues([1,end]);
+                        end
+                    else
+                        yValues = obj.(fieldName)(inds);
+                    end
                 else
-                    xValues = obj.(p.Results.xname)(p.Results.select);
-                    yValues = obj.(fieldName)(p.Results.select);
+                    xValues = obj.(p.Results.xname)(p.Results.select & inds);
+                    yValues = obj.(fieldName)(p.Results.select & inds);
                 end
                
-                
+                if isempty(p.Results.select) && ( numel(xValues) == 0 )
+                  xValues = [0, 1];
+                  yValues = [0, 1];
+                end
                 if p.Results.norm
                     yValues = yValues + obj.cNormConst(chr);
                 end
                 
-                maxNt(chr) = max( xValues );
-                maxXMb(chr) = single(maxNt(chr))*1e-6;
+                if isempty(p.Results.select)
+                    maxNt(chr) = nanmax( xValues );
+                    maxXMb(chr) = single(maxNt(chr))*1e-6;
+                else
+                    maxNt(chr) = 0;
+                    maxXMb(chr) = 0;
+                end
                 
                 if ( numel(xValues) == numel(yValues) )
                     obj.prevLine(chr, lserClmn) = doplottingcurve( xValues, yValues, inds, p );
@@ -116,18 +134,21 @@ function  plotChromosomes(obj, fieldName, varargin)
                 minY = nanmin([minY; p.Results.yThr; yValues(:)]);
                 
                 %                 spl(chr) = gca;
-                if strcmpi(p.Results.xscale , 'lin')
-                    set(spl(chr), 'xlim', [ 0 , maxNt(chr) ]);
-                else
-                    %  set(spl(chr),'xlim',  10.^[0 , log10( double(ChrReads(chr).maxNt) ) ]);
-                    set(spl(chr), 'xlim', 10.^[0, round(log10( double(maxNt(chr)) ))] )
+                if  isempty(p.Results.select)
+                    if strcmpi(p.Results.xscale , 'lin')
+                        set(spl(chr), 'xlim', [ 0 , maxNt(chr) ]);
+                    else
+                        %  set(spl(chr),'xlim',  10.^[0 , log10( double(ChrReads(chr).maxNt) ) ]);
+                        set(spl(chr), 'xlim', 10.^[0, round(log10( double(maxNt(chr)) ))] )
+                    end
                 end
             end % loop through the chromosomes
                         
-            set(obj.prevLine(:, lserClmn), 'linewidth', p.Results.linewidth);
+            set(obj.prevLine(~isnan(obj.prevLine(:, lserClmn)), lserClmn), 'linewidth', p.Results.linewidth);
             
-            set(spl,'yscale',p.Results.yscale);
-            set(spl,'xscale',p.Results.xscale);
+            set(spl(spl~=0),'yscale',p.Results.yscale);
+            set(spl(spl~=0),'xscale',p.Results.xscale);            
+            set(spl(spl~=0),'tickdir', 'out');
             
             minY = floor(minY);
             maxY = ceil(maxY);
@@ -161,7 +182,12 @@ function  plotChromosomes(obj, fieldName, varargin)
             else
                 splpos = get(spl,'position');
             end
-            if ~(size(p.Results.xlim,2) == 2)
+            
+            if ~isempty(p.Results.select)
+                return
+            end
+            
+            if ~(size(p.Results.xlim,2) == 2) 
                 if strcmpi(p.Results.xname,'x')
                     splpos(:,3) = max(splpos(:,3)).* ([maxXMb(:)])'./max([maxXMb(:)]);
                     % elseif strcmpi(p.Results.xscale, 'lin')
@@ -172,6 +198,8 @@ function  plotChromosomes(obj, fieldName, varargin)
                         ( log10(double(maxNt'))./ log10(double(max(maxNt))) );
                 end
             end
+            % check for zero-width
+            splpos(~splpos(:,3),3) = max( splpos(:,3) );
             
             if strcmpi(p.Results.xname,'x')
                 xticks = 1e6*(0:1:ceil(max(maxXMb)))';
@@ -206,6 +234,7 @@ function  plotChromosomes(obj, fieldName, varargin)
             
             %% subfunctions
             function lser = doplottingcurve(xValues , yValues , inds, p)
+                lser = NaN;
                 if nargin(p.Results.plotfun) < 3
                     if    ~p.Results.exp10
                         lser = p.Results.plotfun(xValues, yValues);
@@ -213,11 +242,17 @@ function  plotChromosomes(obj, fieldName, varargin)
                         lser = p.Results.plotfun( xValues, 10.^yValues);
                     end
                 else
+                    if numel(inds)> numel(xValues)
+                        inds = (1:numel(xValues));
+                    end
                     if    ~p.Results.exp10
                         lser = p.Results.plotfun(xValues, yValues, inds);
                     elseif p.Results.exp10
                         lser = p.Results.plotfun( xValues, 10.^yValues, inds);
                     end
+                end
+                if isempty(lser)
+                    lser = NaN;
                 end
             end
             
@@ -233,4 +268,8 @@ function  plotChromosomes(obj, fieldName, varargin)
                   obj.prevFig(end+1) = f;
         end
                   obj.prevAxes(:, nPlLines+1) = spl;
-        end
+if nargout>0
+    varargout{1} = obj.prevLine(:, lserClmn);
+end
+end
+        
