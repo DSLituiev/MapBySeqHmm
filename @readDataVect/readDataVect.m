@@ -493,8 +493,16 @@ classdef readDataVect < handle
             for chr = 1: obj.chrNumber
                 obj.ci{ chr } = (obj.chromosome == chr);
                 obj.M(chr) = sum(obj.ci{chr});
-                obj.cEnd(chr) = find(obj.ci{ chr }, 1, 'last'); % cumsum(obj.M);
-                obj.cSta(chr) = find(obj.ci{ chr }, 1, 'first');% [0, obj.cEnd(1:end-1)] + 1;
+                                
+                if obj.M(chr)>0; 
+                    obj.cSta(chr) = find(obj.ci{ chr }, 1, 'first');
+                    obj.cEnd(chr) = find(obj.ci{ chr }, 1, 'last');
+                else
+                    obj.cSta(chr) = obj.Mtot+1;
+                    obj.cEnd(chr) = obj.Mtot+1;
+                end
+                % [0, obj.cEnd(1:end-1)] + 1; 
+                % cumsum(obj.M);                
                 obj.cNormConst = zeros(obj.chrNumber, 1);
             end
         end
@@ -662,7 +670,7 @@ classdef readDataVect < handle
             
             obj.xkPout(obj.ci{chr}, :) = bsxfun(@plus, nansum([obj.logAlpha{chr}, obj.logBeta{chr}],2), log10(obj.Pz));
 %             infInds = isinf(obj.logAlpha{chr}) & isinf(obj.logBeta{chr});
-            
+%             figure; p= pcolor(obj.logBeta{chr}); set(p, 'linestyle','none')
 %             obj.xkPout(obj.Sta(chr), :)
             obj.xPout(obj.ci{chr}) = calcMarginal(obj.xkPout(obj.ci{chr}, :), 2);
             if any(isnan(obj.xPout(obj.ci{chr})))

@@ -23,32 +23,17 @@ addpath('./emission');
 %= further visualization
 
 %= number of plants:
-% dataID = '/MO/20140514.A-MO7-bwa-nm2-ems-annotation'; N = 181; chr0 = 1;
+dataID = '/MO/20140514.A-MO7-bwa-nm2-ems-annotation'; N = 181; chr0 = 1;
 
 % dataID = '/MO/20140514.A-MO7-bq20-ems-annotation-ecotypeInfo';  N = 181; chr0 = 1;
 % dataID = '/MO/20140514.A-MO7-bq20-ems-annotation'; N = 181; chr0 = 1;
 
-dataID = '/MO/20140514.A-MO8-bq20-ems-annotation-ecotypeInfo'; N = 278; chr0 = 5;
+% dataID = '/MO/20140514.A-MO8-bq20-ems-annotation-ecotypeInfo'; N = 278; chr0 = 5;
 
 % dataID = '/MO/20140514.A-MO8-bq20-ems-annotation'; N = 278; chr0 = 5;
 % dataID = '20140514.A-MO7-bwa-rmdup-clipOverlap-q20-freebayes-ems-annotation-rna'; N = 181; chr0 = 1;
 % dataID = 'MO8-rmdup-clipOverlap-q20-freebayes-ems-annotation-array-rna'; N = 278;  chr0 = 5;
 % dataID = 'MO7-rmdup-clipOverlap-q20-freebayes-ems-annotation-array-rna'; N = 181; chr0 = 1;
-% dataID = '73-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
-
-% dataID = '39-bwa-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
-% dataID = '91-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
-
-% dataID = 'ABD159-rmdup-clipOverlap-q20-freebayes-ems-annotation'; chr0 = 2; x0 = 17521246;  N = 100; % bkgrID = 'ABD241-rmdup-clipOverlap-freebayes';
-% dataID = 'ABD173-rmdup-clipOverlap-q20-freebayes-ems-annotation'; chr0 = 3 ; x0 = 1619248;  N = 50;  % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';
-
-% dataID = 'MO8_mutant_pool-rmdup-clipOverlap-q20-freebayes-ems-annotation-repfilt';
-
-% dataID = 'HL10-rmdup-clipOverlap-q20-freebayes-ems-annotation';  chr0 =  3 ;  x0 =  16473265;N = 50;
-
-%  dataID = 'HL7_Paired-rmdup-clipOverlap-q20-freebayes-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
-% dataID = 'HL7_Paired-ngm-rmdup-clipOverlap-freebayes-ems-annotation-repfilt'; x0 = 5672441; chr0 = 1;
-% dataID = 'HL7_Paired-rmdup-clipOverlap-mpileup-ems-annotation-repfilt'; x0 = 5672441; chr0 = 1;
 
 disp(['=======  Processing data from the run ''', dataID, ''' ======='])
 %= and genetic distance in cM between them)
@@ -77,7 +62,7 @@ clear AR
 % myhist(50, AR.f(AR.f>0.1), 'g')
 
 AR = AR.filter('q', @(x)(x>7)); % mutant reads
-AR = AR.filter('f', @(x)(x<1)); % SNP ratio
+AR = AR.filter('f', @(x)(x<.8)); % SNP ratio
 
 AR.calcDxMin;
 AR = AR.filter('dx', @(x)(x>10), 'chromosome', @(x)(x==chr0)); % 
@@ -116,10 +101,10 @@ KERNEL = 81;
 AR.plotSnpRatio(KERNEL, chr0, 'xTemp')
 
 fig(gcf, 'width', 24)
-exportfig(gcf, fullfile('figu res', dataID, sprintf('SNP_Ratio_k%u', KERNEL)), 'format','eps', 'color', 'rgb')
+exportfig(gcf, fullfile('figures', dataID, sprintf('SNP_Ratio_k%u', KERNEL)), 'format','eps', 'color', 'rgb')
 
-% XRANGE = uint32([23,24]*1e6);
-XRANGE = [7 , 8]*1e6;
+XRANGE = uint32([23,24]*1e6);
+% XRANGE = [7 , 8]*1e6;
 set(gca, 'xlim', XRANGE)
 set(gca,'XTickLabelMode','auto')
 set(gca, 'ylim', [-0.05, .55])
@@ -169,6 +154,9 @@ AR.Alpha = 17;
 AR.calcEmission;
 AR.run();
 
+figure; plot(AR.xPsel)
+
+
 AR.clearPlots;
 
 AR.normalizeChromosomes;
@@ -190,7 +178,7 @@ AR.plotStemsLP(chr0, 'ylim', [-20,0])
 fig(gcf, 'width', 24)
 exportfig(gcf, fullfile('figures', dataID, 'LH-Posterior'), 'format','eps', 'color', 'rgb')
 
-XRANGE = [23,24]*1e6;
+% XRANGE = [23,24]*1e6;
 set(gca, 'xlim', XRANGE)
 set(gca,'XTickLabelMode','auto')
 set(gca, 'ylim', [-4, 0])

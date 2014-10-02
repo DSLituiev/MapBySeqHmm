@@ -130,8 +130,9 @@ function  varargout = plotChromosomes(obj, fieldName, varargin)
                     plot( xValues([1,end]), p.Results.yThr.*[1,1], 'k--')
                 end
                     
-                maxY = nanmax([maxY; p.Results.yThr; yValues(:)]);
-                minY = nanmin([minY; p.Results.yThr; yValues(:)]);
+                    
+                maxY = nanmax([maxY; p.Results.yThr; yValues(~isinf(yValues))]);
+                minY = nanmin([minY; p.Results.yThr; yValues(~isinf(yValues))]);
                 
                 %                 spl(chr) = gca;
                 if  isempty(p.Results.select)
@@ -152,6 +153,9 @@ function  varargout = plotChromosomes(obj, fieldName, varargin)
             
             minY = floor(minY);
             maxY = ceil(maxY);
+            if isnan(minY) && isnan(maxY)
+                error('plotChromosomes:allNaNs', 'all values are NaNs')
+            end
             
             if ~isempty(p.Results.ylim) && isnumeric(p.Results.ylim)
                 obj.prevYLims = p.Results.ylim;
