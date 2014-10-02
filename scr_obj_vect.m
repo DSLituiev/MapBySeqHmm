@@ -81,6 +81,7 @@ dataPath = fullfile(DATA_PATH, [dataID, '.csv'] );
 
 dataID = sprintf(strcat(dataID, '_%u'), ALPHA);
 mkdir(fullfile('figures',dataID))
+copyfile('./ResultsInfo.txt', fullfile('figures',dataID, 'README.txt'))
 
 % [AR, ~] = readSequencingDataCsv(dataPath, 'noannotation');
 
@@ -221,9 +222,12 @@ numberOfHits = 2e6;
 AR.printTopHits(fullfile('figures', dataID, [dataName,ext, '-out.csv']), numberOfHits, 'xLogOdds', 'cutoffValue', -Inf)
 %%
 if exist('chr0', 'var')
-    figure
-    plot(AR.x(AR.chromosome == chr0)*1e-6, AR.dx(AR.chromosome == chr0), 'rx')
+    figure('name', 'dx and membership')
+    scatter(AR.x(AR.chromosome == chr0)*1e-6, AR.dx(AR.chromosome == chr0), 2.5+2.5*AR.contrib(AR.chromosome == chr0), AR.contrib(AR.chromosome == chr0), 'o')
     set(gca, 'yscale', 'log')
+    
+    figure('name', 'membership')
+    plot(AR.x(AR.chromosome == chr0)*1e-6, AR.contrib(AR.chromosome == chr0), 'bx-')
 end
 
 %%

@@ -188,13 +188,11 @@ if strcmpi(p.Results.xname,'x')
     ind5 = logical(mod(xticks,5e6));
     xticklabel(ind5) = {''};
     
-    for chr = 1:obj.chrNumber
         % set(spl(chr), 'position', splpos(chr,:));
         % get(spl(chr),'position')
         set(spl,'xtick',xticks(1:ceil( maxXMb(chr))),...
             'XTickLabel', xticklabel(1:ceil( maxXMb(chr))));
         set(spl,'box','off')
-    end
 end
 
 % if (size(p.Results.xlim,2) == 2)

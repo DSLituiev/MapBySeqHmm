@@ -23,51 +23,40 @@ addpath('./emission');
 %= further visualization
 
 %= number of plants:
-dataID = '/MO/20140514.A-MO7-bwa-nm2-ems-annotation'; N = 181; chr0 = 1;
+% dataID = '/MO/20140514.A-MO7-bwa-nm2-ems-annotation'; N = 181; chr0 = 1;
 
 % dataID = '/MO/20140514.A-MO7-bq20-ems-annotation-ecotypeInfo';  N = 181; chr0 = 1;
 % dataID = '/MO/20140514.A-MO7-bq20-ems-annotation'; N = 181; chr0 = 1;
 
-% dataID = '/MO/20140514.A-MO8-bq20-ems-annotation-ecotypeInfo'; N = 278; chr0 = 5;
+dataID = '/MO/20140514.A-MO8-bq20-ems-annotation-ecotypeInfo'; N = 278; chr0 = 5;
 
 % dataID = '/MO/20140514.A-MO8-bq20-ems-annotation'; N = 278; chr0 = 5;
 % dataID = '20140514.A-MO7-bwa-rmdup-clipOverlap-q20-freebayes-ems-annotation-rna'; N = 181; chr0 = 1;
 % dataID = 'MO8-rmdup-clipOverlap-q20-freebayes-ems-annotation-array-rna'; N = 278;  chr0 = 5;
 % dataID = 'MO7-rmdup-clipOverlap-q20-freebayes-ems-annotation-array-rna'; N = 181; chr0 = 1;
 
+%%
+%= linkage loosening factor:
+ALPHA = 1;
+% ALPHA = 1./(0:0.01:1);
+%= construct the path to the (primary experimental) data file
+dataPath = fullfile(DATA_PATH, [dataID, '.csv'] );
 disp(['=======  Processing data from the run ''', dataID, ''' ======='])
 %= and genetic distance in cM between them)
 
-%%
-
+dataID = sprintf(strcat(dataID, '_%u'), ALPHA);
 mkdir(fullfile('figures',dataID))
-%=       load the recombination map (contains positions of the markers
-%= and genetic distance in cM between them)
 
-%= construct the path to the (primary experimental) data file
-dataPath = fullfile(DATA_PATH, [dataID, '.csv'] );
-%= extract the refenece reads if the reference ID is given:
 clear AR 
 
-% [AR, ~] = readSequencingDataCsv(dataPath, 'noannotation');
-
 [AR] = readSequencingDataCsv2(dataPath);
-% 
-% [AR.xPrior, AR.maxHitGene, AR.maxHitEffect,...
-%     AR.positionCDS, AR.effectAA, AR.effectCodone] = constructPriorStr(annotation);
-
-% figure
-% myhist(50,annotation AR.f, 'r')
-% hold all
-% myhist(50, AR.f(AR.f>0.1), 'g')
-
+%% apply filters and visualise statistics
 AR = AR.filter('q', @(x)(x>7)); % mutant reads
 AR = AR.filter('f', @(x)(x<.8)); % SNP ratio
 
 AR.calcDxMin;
 AR = AR.filter('dx', @(x)(x>10), 'chromosome', @(x)(x==chr0)); % 
 AR = AR.filter('dx', @(x)(x<1e4)); % 
-
 
 
 AR.calcDxMin;
@@ -78,33 +67,26 @@ exportfig(gcf, fullfile('figures', dataID,'qualityCtrl'), 'format','eps', 'color
 % visualizeAnnotationStat(annotation)
 
 % AR.unmix('plot');
-
+%% load the recombination map 
+%= (contains positions of the markers
+%= and genetic distance in cM between them)
 load('./reference/ChrMap.mat')
 AR.chrMap = ChrMap;
 clear ChrMap;
-%% SNP ratio
-% 
-% figure('name', 'mt vs wt SNP ratio'); 
-% scatter3(AR.x(AR.chromosome == chr0 & AR.snpEcotypesInfo), AR.f(AR.chromosome == chr0 & AR.snpEcotypesInfo), AR.fw(AR.chromosome == chr0 & AR.snpEcotypesInfo), 'b.')
-% hold all
-% plot3(AR.x(AR.chromosome == chr0 & AR.snpEcotypesInfo), AR.fmMedianF(AR.chromosome == chr0 & AR.snpEcotypesInfo), AR.fwMedianF(AR.chromosome == chr0 & AR.snpEcotypesInfo), 'r-')
-% 
-% xlabel('x'); ylabel('f_{mt}'); zlabel('f_{wt}')
-% AR.snpEcotypesInfo = (annotation.snpEcotypesInfo >0);
-AR.xTemp = AR.snpEcotypesInfo ;% & AR.f >1/3;
-
+%% plot SNP ratio
 
 addpath(fullfile(USERFNCT_PATH, 'fastmedfilt1d'));
 KERNEL = 81;
 
-% AR.plotSnpRatio(KERNEL, chr0)
-AR.plotSnpRatio(KERNEL, chr0, 'xTemp')
+AR.plotSnpRatio(KERNEL, chr0)
+% AR.xTemp = AR.snpEcotypesInfo & AR.r > 40 & AR.r > 60;
+% AR.plotSnpRatio(KERNEL, chr0, 'xTemp')
 
 fig(gcf, 'width', 24)
 exportfig(gcf, fullfile('figures', dataID, sprintf('SNP_Ratio_k%u', KERNEL)), 'format','eps', 'color', 'rgb')
 
-XRANGE = uint32([23,24]*1e6);
-% XRANGE = [7 , 8]*1e6;
+% XRANGE = uint32([23,24]*1e6);
+XRANGE = [7 , 8]*1e6;
 set(gca, 'xlim', XRANGE)
 set(gca,'XTickLabelMode','auto')
 set(gca, 'ylim', [-0.05, .55])
@@ -116,8 +98,8 @@ AR.plotScatterMW()
 fig(gcf, 'width', 24)
 exportfig(gcf, fullfile('figures', dataID, 'SNP_Ratio_WT_vs_MT.eps'), 'format','eps', 'color', 'rgb')
 
-%% general experimental constants:
-
+return
+%% set general experimental constants:
 AR.pop = N;
 %%
 
@@ -144,8 +126,8 @@ AR.emissionHandle = @(q, r, study)emissionMixBetaBinomial(q, r, AR.pop, theta, l
 % AR.emissionHandle = @(qq, rr, ff)emissionk0(qq, rr, AR.pop);
 % AR.contrib = ones(size(AR.x));
 
-% AR.Alpha = 1./(0:0.01:1);
-AR.Alpha = 17;
+
+AR.Alpha = ALPHA;
 % 
 % load( 'emission_fun.mat')
 %  AR.E = E;
@@ -164,8 +146,6 @@ AR.normalizeChromosomes;
 AR.plotChromosomes('xPsel', 'yscale', 'lin', 'norm', true, 'figure', 'new');
 
 AR.plotChromosomes('xPstat', 'yscale', 'lin', 'norm', true);
-
-
 
 % AR.calcLogOdds;
 AR.plotChromosomes('xLogOdds', 'yscale', 'lin', 'figure', 'new', 'yThr', 0);

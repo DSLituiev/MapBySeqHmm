@@ -86,7 +86,7 @@ function  varargout = plotChromosomes(obj, fieldName, varargin)
                     xValues = obj.(p.Results.xname)(inds);
                     
                     if isscalar(obj.(fieldName)) && numel(xValues)>0                        
-                        yValues = [1, 1] * obj.(fieldName);
+                        yValues = [1, 1]' * obj.(fieldName);
                         if (p.Results.xname == 'x')
                              xValues = [0; xValues(end)];
                         else
@@ -101,8 +101,8 @@ function  varargout = plotChromosomes(obj, fieldName, varargin)
                 end
                
                 if isempty(p.Results.select) && ( numel(xValues) == 0 )
-                  xValues = [0, 1];
-                  yValues = [0, 1];
+                  xValues = [0, 1]';
+                  yValues = [0, 1]';
                 end
                 if p.Results.norm
                     yValues = yValues + obj.cNormConst(chr);
@@ -130,9 +130,9 @@ function  varargout = plotChromosomes(obj, fieldName, varargin)
                     plot( xValues([1,end]), p.Results.yThr.*[1,1], 'k--')
                 end
                     
-                    
-                maxY = nanmax([maxY; p.Results.yThr; yValues(~isinf(yValues))]);
-                minY = nanmin([minY; p.Results.yThr; yValues(~isinf(yValues))]);
+                tempYValues = yValues(~isinf(yValues));
+                maxY = nanmax([maxY; p.Results.yThr; tempYValues]);
+                minY = nanmin([minY; p.Results.yThr; tempYValues(:)]);
                 
                 %                 spl(chr) = gca;
                 if  isempty(p.Results.select)

@@ -668,7 +668,8 @@ classdef readDataVect < handle
                 error('runFBinternal:wrongPzSize','wrong prior distribution for z_m is submitted!')
             end
             
-            obj.xkPout(obj.ci{chr}, :) = bsxfun(@plus, nansum([obj.logAlpha{chr}, obj.logBeta{chr}],2), log10(obj.Pz));
+            obj.xkPout(obj.ci{chr}, :) = bsxfun(@plus, (obj.logAlpha{chr} + obj.logBeta{chr}), log10(obj.Pz(:)'));
+            % obj.xkPout(obj.ci{chr}, :) = bsxfun(@plus, nansum([obj.logAlpha{chr}, obj.logBeta{chr}],2), log10(obj.Pz));
 %             infInds = isinf(obj.logAlpha{chr}) & isinf(obj.logBeta{chr});
 %             figure; p= pcolor(obj.logBeta{chr}); set(p, 'linestyle','none')
 %             obj.xkPout(obj.Sta(chr), :)
@@ -686,93 +687,7 @@ classdef readDataVect < handle
         
         varargout = plotOneChromosome(obj, fields, chr, varargin);
         
-        function plotSnpRatio(obj, KERNEL, varargin)
-            if nargin>3 && isprop(obj, varargin{2})
-                selStr = {'select', obj.(varargin{2}) };
-            else
-                selStr = {};
-            end
-            
-            if nargin>2 && isscalar(varargin{1})
-                chr0 = varargin{1};
-                fieldPlotFun = @(x)obj.plotOneChromosome(chr0, x{:}, 'yscale', 'lin', selStr{:});
-            else                
-                 fieldPlotFun = @(x)obj.plotChromosomes(x{:}, 'yscale', 'lin', selStr{:});
-            end
-
-            % addpath(fullfile(USERFNCT_PATH, 'fastmedfilt1d'));
-            hf = fieldPlotFun({'f', 'figure', 'new', 'plotfun', @(x,y)plot(x,y, 'r.' , 'color', [1, 0.4, 0.4])});
-%             hf = obj.plotChromosomes('f', 'yscale', 'lin', 'figure', 'new',  'plotfun', @(x,y)plot(x,y, 'r.' , 'color', [1, 0.4, 0.4]));
-            obj.f0 = 0.25;
-            fieldPlotFun({'f0',  'figure', 'old', 'plotfun', @(x,y)plot(x,y, '-', 'color', [.3, 0.85, 0.85])});
-%             obj.plotChromosomes('f0', 'yscale', 'lin', 'figure', 'old', 'plotfun', @(x,y)plot(x,y, '-', 'color', [.3, 0.85, 0.85]));
-            obj.f0 = 0.5;
-            fieldPlotFun({'f0',  'figure', 'old', 'plotfun', @(x,y)plot(x,y, '-', 'color', [0.6, 0.6, 1])}); 
-%             obj.plotChromosomes('f0', 'yscale', 'lin', 'figure', 'old', 'plotfun', @(x,y)plot(x,y, '-', 'color', [0.6, 0.6, 1]));
-            
-            obj.filterF( KERNEL)            
-            
-            if obj.flagWT
-                hfw = fieldPlotFun({'fw', 'figure', 'old', 'plotfun', @(x,y)plot(x,y, 'g.', 'color', [ 0.4, 1, 0.4])} );
-%                 obj.plotChromosomes('fw', 'yscale', 'lin', 'figure', 'old', 'plotfun', @(x,y)plot(x,y, 'gx', 'color', [ 0.4, 1, 0.4]));
-                
-                zeroFwInds = find( (diff(obj.fwMedianF) == 0) & (obj.fwMedianF(1:end-1) == 0 ) );
-               
-                zerosStrtEnd = zeros( sum(diff(zeroFwInds)~= 1) +1, 2);
-                zerosStrtEnd(1, 1) = zeroFwInds(1);
-                
-                jj = 1;
-                for ii = 1:numel(zeroFwInds)-1
-                    if zeroFwInds(ii)+1 ~= zeroFwInds(ii+1)                        
-                        zerosStrtEnd(jj, 2) = zeroFwInds(ii); % end
-                        zerosStrtEnd(jj+1, 1) = zeroFwInds(ii+1); % start
-                        jj = jj+1;
-                    end
-                end                
-                zerosStrtEnd(end, 2) = zeroFwInds(end);
-                clusterLength = diff(zerosStrtEnd, 1, 2)+1;
-                        
-                iBigClusters = zerosStrtEnd(clusterLength>KERNEL, :);
-                 fprintf('boundaries of the zero-SNP-ratio  regions in WT pools:\n')
-                for ii = 1:size(iBigClusters,1)
-                     fprintf('number of SNPs within the region:\t%u\t chr:\t%u\t x:\t%u\t--\t%u\n',diff(iBigClusters(ii,:)), obj.chromosome(iBigClusters(ii,1)),  obj.x(iBigClusters(ii,1)), obj.x(iBigClusters(ii,2))  )
-                end
-                
-                hfwMd = fieldPlotFun({'fwMedianF',  'figure', 'old',...
-                    'plotfun', @(x,y)plot(x,y, '-', 'color', [ 0, .6, 0], 'linewidth', 3)});
-%                 obj.plotChromosomes('fwMedianF', 'yscale', 'lin', 'figure', 'old', 'yThr', 0,...
-%                     'plotfun', @(x,y)plot(x,y, '-', 'color', [ 0, .6, 0], 'linewidth', 3));
-
-                hfwMn = fieldPlotFun({'fwMeanF', 'figure', 'old',...
-                    'plotfun', @(x,y)plot(x,y, '-', 'color', [ 0, .8, 0], 'linewidth', 1.5)} );
-%                 obj.plotChromosomes('fwMeanF', 'yscale', 'lin', 'figure', 'old', 'yThr', 0,...
-%                     'plotfun', @(x,y)plot(x,y, '-', 'color', [ 0, .8, 0], 'linewidth', 1.5));
-            end
-            
-            hfMd = fieldPlotFun({'fmMedianF',  'figure', 'old', ...
-                'plotfun', @(x,y)plot(x,y, '-', 'color', [.6, 0, 0], 'linewidth', 3) });
-%             hfMedian = obj.plotChromosomes('fmMedianF', 'yscale', 'lin', 'figure', 'old', 'yThr', 0,...
-%                 'plotfun', @(x,y)plot(x,y, '-', 'color', [.6, 0, 0], 'linewidth', 3));
-
-            hfMn = fieldPlotFun({'fmMeanF', 'figure', 'old', ...
-                'plotfun', @(x,y)plot(x,y, '-', 'color', [1, 0, 0], 'linewidth', 1.5)} );
-%             hfMean = obj.plotChromosomes('fmMeanF', 'yscale', 'lin', 'figure', 'old', 'yThr', 0,...
-%                 'plotfun', @(x,y)plot(x,y, '-', 'color', [1, 0, 0], 'linewidth', 1.5));
-            
-            set(obj.prevAxes(:,end), 'box','on')
-            legendText = { 'SNP ratio', sprintf('median filter, k=%u', KERNEL),  sprintf('mean filter, k=%u', KERNEL) };
-            if obj.flagWT
-                legendText =  {legendText{:}, 'SNP ratio (wt)', 'median filter (wt)',  'mean filter (wt)' };                 
-                ll = legend([hf(1), hfMd(1), hfMn(1), hfw(1), hfwMd(1), hfwMn(1),], legendText );
-            else
-                ll = legend([hf(1), hfMd(1), hfMn(1)], legendText );
-            end
-
-            
-            if ~( nargin>2 && isscalar(varargin{1}) )
-                set(ll, 'Position', [0.68    0.6280    0.25    0.1243] );
-            end
-        end
+        plotSnpRatio(obj, KERNEL, varargin)
         
         function plotStems(obj, fields, varargin)
             
@@ -794,44 +709,9 @@ classdef readDataVect < handle
             set(obj.prevAxes(:, end), 'TickDir', 'out')
         end
         
-        function plotStemsLP(obj, varargin)
-            if nargin>2 && isscalar(varargin{1}) && isnumeric(varargin{1})
-                chr0 = varargin{1};
-                fieldPlotFun = @(x)obj.plotOneChromosome(chr0, x{:});
-                args = varargin(2:end);
-            else
-                fieldPlotFun = @(x)obj.plotChromosomes(x{:});
-                args = varargin;
-            end
-            markerSz = 4;
-            
-            %             plotChromosomes(obj, 'xPosteriorNorm', ...
-            %                 'plotfun', @(x,y)stem(x,y, 'MarkerSize', markerSz, 'MarkerEdgeColor', 'r', 'linewidth', 0.8),... % 'MarkerEdgeColor', 'r',
-            %                 'exp10',false, 'yscale', 'lin', 'figure', 'new', varargin{:});
-            %
-            %             set(obj.prevLine(:, end), 'BaseValue',( obj.prevYLims(1)-2) );
-            
-            fieldPlotFun({'xPselNorm', ...
-                'plotfun', @(x,y)stem(x,y, 'MarkerSize', markerSz-1, 'MarkerEdgeColor', 'g', 'linewidth', 0.8),... % 'MarkerEdgeColor', 'r',
-                'exp10',false, 'yscale', 'lin', 'yThr', 0, 'figure', 'new', args{:}});
-            
-            set(obj.prevLine(:, end), 'BaseValue',( obj.prevYLims(1)-2) );
-            
-            hits = (obj.xPosteriorNorm > obj.xPselNorm );
-            colors = bsxfun(@times, [0 .8 0], hits) + bsxfun(@times, [.2 1 .2], 0.5 * ~hits) ;
-            
-            fieldPlotFun({ 'xPselNorm', ...
-                'plotfun', @(x,y,z)scatter(x,y, markerSz, colors(z)),... % 'MarkerEdgeColor', 'r',
-                'exp10',false, 'yscale', 'lin',  args{:}});
-            
-            colors = bsxfun(@times, [.8 0 0], hits) ;% + bsxfun(@times, [1 0.2 0.2], 0.2 * ~hits) ;
-            fieldPlotFun({'xPosteriorNorm', ...
-                'plotfun', @(x,y,z)scatter(x,y, markerSz, colors(z)),... % 'MarkerEdgeColor', 'r',
-                'exp10',false, 'yscale', 'lin',  args{:}});
-            
-            
-            set(obj.prevAxes(:, end), 'TickDir', 'out')
-        end
+        %% plot stems for Likeilihood and Posterior
+        plotStemsLP(obj, varargin)
+    
         function plotScatterMW(obj, varargin)
             if ~obj.flagWT
                 return
@@ -843,19 +723,30 @@ classdef readDataVect < handle
                 inds = true(size(obj.x));
             end
             figure('name', 'mt vs wt SNP ratio');
-            scatter(obj.f(inds), obj.fw(inds), 'b.')
+            da(1) = scatter(obj.f(inds), obj.fw(inds), 'b.');
+            
             hold on
+
+            da(2) =  scatter(obj.fmMedianF(inds ), obj.fwMedianF(inds ), 4, [0.7,.3, .3], 'o');
+            da(3) =  scatter(obj.fmMeanF(inds ), obj.fwMeanF(inds ), 4, [0.2,.8, .2], 'o');
+            daInfo = {'raw [all]', 'median', 'mean'};
+            
+            dl(1) = plot([0,1], [0,1], 'm--');
+            dl(2) = plot([0,.5], [0.5, 0], 'r-');
+            dlInfo = {'m = w (errors)', 'm + w = 1/2 (expected)'};
+            
+            deInfo = {};
             if ~isempty(obj.snpEcotypesInfo)
-                scatter(obj.f(inds & obj.snpEcotypesInfo), obj.fw(inds & obj.snpEcotypesInfo), 'g.')
-                scatter(obj.fmMedianF(inds & obj.snpEcotypesInfo), obj.fwMedianF(inds & obj.snpEcotypesInfo), 4, [0.7,.3, .3], 'o')                
-                scatter(obj.fmMeanF(inds & obj.snpEcotypesInfo), obj.fwMeanF(inds & obj.snpEcotypesInfo), 4, [0.2,.8, .2], 'o')
+                de(1) =  scatter(obj.f(inds & obj.snpEcotypesInfo), obj.fw(inds & obj.snpEcotypesInfo), 'g.');
+                deInfo = 'BG ecotype';                
+                uistack(da(2:3), 'top')
+                uistack(dl, 'top')
             end
-            plot([0,1], [0,1], 'm--')
-            plot([0,.5], [0.5, 0], 'r-')
+            
             axis equal
             xlabel('f_{mt}'); ylabel('f_{wt}')
             xlim([0,1]); ylim([0,1])
-            legend({'all','BG ecotype','m = w (errors)', 'm + w = 1/2 (expected)'})
+            legend([da, dl, de], {daInfo{:}, dlInfo{:}, deInfo}, 'location', 'northwest')
         end
         
         function clearPlots(obj)
@@ -880,7 +771,11 @@ classdef readDataVect < handle
         function filterF(obj, KERNEL, varargin)
             % addpath(fullfile(USERFNCT_PATH, 'fastmedfilt1d'));
             obj.fmMedianF = zeros(size(obj.f));
-            obj.fwMedianF = zeros(size(obj.fw));
+            obj.fmMeanF = zeros(size(obj.f));
+            if ~isempty(obj.fw)
+                obj.fwMeanF = zeros(size(obj.f));
+                obj.fwMedianF = zeros(size(obj.f));
+            end
             if nargin>2
                 chromosomes = varargin{1};
             else
