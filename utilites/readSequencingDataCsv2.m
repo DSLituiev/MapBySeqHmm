@@ -38,7 +38,9 @@ if ~isempty(header{20}{:})
     flagRNA = true;
     dataPattern = ['%s %u %f %s %s %s',...
                   ' %u %s %s %s %u %u',...
-                  ' %u %u %u %u %u %u %f %f %f'];
+                  ' %u %u %u %u %u %u', ...
+                  ' %f %u8'];
+              
 elseif ~isempty(header{16}{:}) % 17, 18
     flagWT = true;
     dataPattern = ['%s %u %f %s %s %s',...
@@ -106,8 +108,8 @@ Reads.xPrior = log10(Reads.xPrior);
 
 if flagRNA
     % Reads.xPrior(~logical(data{19})) = -Inf;
-    Reads.xArrayPrior = double(data{19});
-    Reads.xRnaPrior = double(data{20});
+    Reads.snpFrequencyInEcotypes = double(data{19});
+    Reads.snpEcotypesInfo = logical(data{20}>0);
 end
 
 Reads.geneID = data{6};
@@ -139,9 +141,9 @@ fprintf('%u reads extracted\n', Reads.Mtot)
 % 10...11: wt_altCount;mt_altCount;
 % 12..17: geneID;geneSO; mutCDS;mutProt; mutPosCDS;mutPosProt;
 % 18: distance;
-for ii = 6:11
-    annotation.(header{ii}{1}) = data{ii};
-end
+% for ii = 6:11
+%     annotation.(header{ii}{1}) = data{ii};
+% end
 
 %     fid = fopen('SO_terms.csv');
 %     % terms = textscan(fid, '%s %s %s %s', 'delimiter', ',', 'HeaderLines', 0);
@@ -153,6 +155,6 @@ end
 %     % termsID(:,3) = '_';
 %     
 %     clear terms
-% annotation = [];
+annotation = [];
 % annotation = initializeSO(termsID, annotation, numel(position));
   

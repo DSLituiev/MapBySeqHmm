@@ -24,7 +24,7 @@ addpath('./emission');
 %= further visualization
 
 %= number of plants:
-dataID = 'CH/73-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; N = 100;
+% dataID = 'CH/73-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; N = 100;
 % dataID = 'CH/73-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; N = 100;
 % dataID = 'CH/91-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; N = 100;
 % dataID = 'CH/91-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
@@ -46,7 +46,7 @@ dataID = 'CH/73-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; N = 100;
 %             'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-freebayes-ems-annotation', 50, 1, 5672441};
             
            
-% dataID = 'ABD/20120427-ABD159-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation';   N = 100; chr0 = 2; x0 = 17521246;
+dataID = 'ABD/20120427-ABD159-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation';   N = 100; chr0 = 2; x0 = 17521246;
 % dataID = 'ABD/20120427-ABD159-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; chr0 = 2; x0 = 17521246;  N = 100;
 
 %  dataID = 'ABD/20130426.B-ABD173-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation'; chr0 = 3 ; x0 = 1619248;  N = 50;  % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';
@@ -109,9 +109,10 @@ AR = AR.filter('r', @(x)(x<quantile(AR.r, 0.98))); % mutant reads
 AR = AR.filter('q', @(x)(x>7)); % mutant reads
 
 % AR = AR.filter('f', @(x)(x<1)); % SNP ratio
-% AR = AR.filter('f', @(x)(x<.8)); % SNP ratio
+AR = AR.filter('f', @(x)(x<.8)); % SNP ratio
 
  AR = AR.filter('dx', @(x)(x>120)); % SNP ratio
+% AR.unmix('plot');
 AR.unmix('plot');
 
 AR.filterDx();
@@ -167,6 +168,7 @@ AR.emissionHandle = @(q, r, study)emissionMixBetaBinomial(q, r, AR.pop, theta, l
 % AR.Alpha = 1./(0:0.01:1);
 AR.Alpha =  ALPHA;
 
+AR.runBW();
 %
 % load( 'emission_fun.mat')
 %  AR.E = E;

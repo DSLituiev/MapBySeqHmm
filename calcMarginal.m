@@ -42,6 +42,9 @@ else
         if ~isinf(scaledLogP(ii))
             S.subs{dim} = ii;
             logDiff = bsxfun(@minus, sumLogP, subsref(scaledLogP, S) );
+            if isnan(logDiff)
+                logDiff = 0;
+            end
             sumLogP = sumLogP +...
                 log10(1 + 10.^( -logDiff ));
 %         else

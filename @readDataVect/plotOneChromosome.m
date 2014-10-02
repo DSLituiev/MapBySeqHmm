@@ -16,7 +16,7 @@ addParamValue(p,    'xscale',               'lin' ,  @ischar);
 addParamValue(p,      'ylim',                   []);
 addParamValue(p, 'linestyle',                  '-',  @ischar);
 addParamValue(p,   'plotfun',                @plot,  @(x)isa(x,'function_handle'));
-addParamValue(p,    'select',                   '',  @ischar );
+addParamValue(p,    'select',                   [],  @(x)(islogical(x)|isempty(x)) );
 addParamValue(p,   'linewidth',                1 , @isscalar);
 addParamValue(p,    'norm',                false , @isscalar);
 addParamValue(p,    'yThr',                NaN , @isscalar);
@@ -76,7 +76,7 @@ if flagFigOld
 else
     spl = subplot(1, 1, 1);
 end
-if isempty(p.Results.select)
+if isempty(p.Results.select) || ~(numel( obj.(fieldName) ) == numel(p.Results.select))
     xValues = obj.(p.Results.xname)(inds);
     
     if isscalar(obj.(fieldName)) && numel(xValues)>0
@@ -210,7 +210,7 @@ end
 % end
 %== define the callback function:
 dcm_obj = datacursormode(f);
-set(dcm_obj ,'UpdateFcn',{@PlotCallbackFNt, obj.prevLine, obj, p.Results.xname, obj.prevYNames, p.Results.exp10});
+set(dcm_obj ,'UpdateFcn',{@PlotCallbackFNt, obj.prevLine, obj, p.Results.xname, obj.prevYNames, p.Results.exp10, p.Results.select});
 
 
 %% subfunctions

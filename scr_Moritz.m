@@ -25,9 +25,10 @@ addpath('./emission');
 %= number of plants:
 % dataID = '/MO/20140514.A-MO7-bwa-nm2-ems-annotation'; N = 181; chr0 = 1;
 
+% dataID = '/MO/20140514.A-MO7-bq20-ems-annotation-ecotypeInfo';  N = 181; chr0 = 1;
 % dataID = '/MO/20140514.A-MO7-bq20-ems-annotation'; N = 181; chr0 = 1;
 
-dataID = '/MO/20140514.A-MO8-bq20-ems-annotation'; N = 278; chr0 = 5;
+dataID = '/MO/20140514.A-MO8-bq20-ems-annotation-ecotypeInfo'; N = 278; chr0 = 5;
 
 % dataID = '/MO/20140514.A-MO8-bq20-ems-annotation'; N = 278; chr0 = 5;
 % dataID = '20140514.A-MO7-bwa-rmdup-clipOverlap-q20-freebayes-ems-annotation-rna'; N = 181; chr0 = 1;
@@ -65,14 +66,13 @@ clear AR
 
 % [AR, ~] = readSequencingDataCsv(dataPath, 'noannotation');
 
-[AR, annotation] = subtractBackGroundGenotype(dataPath);
-
+[AR] = readSequencingDataCsv2(dataPath);
 % 
 % [AR.xPrior, AR.maxHitGene, AR.maxHitEffect,...
 %     AR.positionCDS, AR.effectAA, AR.effectCodone] = constructPriorStr(annotation);
 
 % figure
-% myhist(50, AR.f, 'r')
+% myhist(50,annotation AR.f, 'r')
 % hold all
 % myhist(50, AR.f(AR.f>0.1), 'g')
 
@@ -98,20 +98,38 @@ load('./reference/ChrMap.mat')
 AR.chrMap = ChrMap;
 clear ChrMap;
 %% SNP ratio
+% 
+% figure('name', 'mt vs wt SNP ratio'); 
+% scatter3(AR.x(AR.chromosome == chr0 & AR.snpEcotypesInfo), AR.f(AR.chromosome == chr0 & AR.snpEcotypesInfo), AR.fw(AR.chromosome == chr0 & AR.snpEcotypesInfo), 'b.')
+% hold all
+% plot3(AR.x(AR.chromosome == chr0 & AR.snpEcotypesInfo), AR.fmMedianF(AR.chromosome == chr0 & AR.snpEcotypesInfo), AR.fwMedianF(AR.chromosome == chr0 & AR.snpEcotypesInfo), 'r-')
+% 
+% xlabel('x'); ylabel('f_{mt}'); zlabel('f_{wt}')
+% AR.snpEcotypesInfo = (annotation.snpEcotypesInfo >0);
+AR.xTemp = AR.snpEcotypesInfo ;% & AR.f >1/3;
+
 
 addpath(fullfile(USERFNCT_PATH, 'fastmedfilt1d'));
 KERNEL = 81;
-AR.plotSnpRatio(KERNEL, chr0)
+
+% AR.plotSnpRatio(KERNEL, chr0)
+AR.plotSnpRatio(KERNEL, chr0, 'xTemp')
 
 fig(gcf, 'width', 24)
-exportfig(gcf, fullfile('figures', dataID, sprintf('SNP_Ratio_k%u', KERNEL)), 'format','eps', 'color', 'rgb')
+exportfig(gcf, fullfile('figu res', dataID, sprintf('SNP_Ratio_k%u', KERNEL)), 'format','eps', 'color', 'rgb')
 
-XRANGE = [23,24]*1e6;
+% XRANGE = uint32([23,24]*1e6);
+XRANGE = [7 , 8]*1e6;
 set(gca, 'xlim', XRANGE)
 set(gca,'XTickLabelMode','auto')
 set(gca, 'ylim', [-0.05, .55])
 set(gca,'XTick',XRANGE(1):1e5:XRANGE(2))
 exportfig(gcf, fullfile('figures', dataID, sprintf('SNP_Ratio_k%u-range_%1.1e-%1.1e.eps', KERNEL,XRANGE(1), XRANGE(2))), 'format','eps', 'color', 'rgb')
+
+
+AR.plotScatterMW()
+fig(gcf, 'width', 24)
+exportfig(gcf, fullfile('figures', dataID, 'SNP_Ratio_WT_vs_MT.eps'), 'format','eps', 'color', 'rgb')
 
 %% general experimental constants:
 
