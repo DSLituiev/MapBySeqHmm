@@ -10,3 +10,10 @@ junk/
 data/
 
 figures.tar.gz
+
+**/*.mexw64
+
+**/*.png
+
+**/*.jp*g
+
