@@ -1,19 +1,18 @@
 *~
+
 *.mat
 # but do track in the reference folder
 !reference/*.mat
 
 figures/
-
 junk/
-
 data/
+raw_data/
 
 figures.tar.gz
 
 **/*.mexw64
 
 **/*.png
-
 **/*.jp*g
 

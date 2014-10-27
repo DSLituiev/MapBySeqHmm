@@ -1,8 +1,10 @@
 clear all ; clc
 addpath('D:\MATLABuserfunctions\NewtonRaphson');
-addpath('D:\MATLABuserfunctions\binomial');
-addpath('D:\MATLABuserfunctions');
-addpath('.\betabinomial');
+addpath('./dependencies/binomial');
+addpath('./dependencies');
+addpath('./betabinomial');
+
+addpath('./emission_unused')
 
 n0 = 100;
 k = (0:1:n0)';

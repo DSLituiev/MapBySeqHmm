@@ -6,8 +6,8 @@ tic
 DATA_PATH = '/media/Processing/seq/data';
 % DATA_PATH = '/media/Processing/seq/olddata';
 % DATA_PATH = './data';
-USERFNCT_PATH = '/media/Processing/MATLABuserfunctions';
-% addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions/binomial') );
+USERFNCT_PATH = './dependencies';
+% addpath(fullfile(USERFNCT_PATH, '/binomial') );
 addpath(USERFNCT_PATH);
 addpath(fullfile(USERFNCT_PATH, 'mtimesx'));
 addpath(fullfile(USERFNCT_PATH, 'MinMaxSelection'));

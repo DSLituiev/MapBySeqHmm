@@ -12,9 +12,8 @@ t = 0:0.1:4;
 figure
 plot(t, 1-exp(-t/2))
 
-
-M = 2000;
-G = 5000;
+M = 80;
+G = 2000;
 G/M
 mu = M/G;
 tu = G*sort(rand(M,1));
@@ -27,18 +26,14 @@ dxRaw = diff(tu(hits));
 dxPair = [dxRaw, circshift(dxRaw,-1)];
 dx = nanmin(dxPair,[],2);
 
-
-
-
 figure
 hist( log10(diff(tu)), 100 )
 hold all
 plot( log10(G/M*[1,1]), [0,1], 'rx')
 
-
-y = (-3:0.05:2)';
+y = (0:0.05:5)';
 t = 10.^y;
-plogt = log(10).*t.*mu.*exp(-mu.*t);
+plogt = logPoisson1(t, mu);
 
 figure
 plot(y, plogt, 'g:')
@@ -69,3 +64,27 @@ xlabel('\Delta{}x')
 
 hold all
 plot3(T./(N+1), N, ones(size(N)), 'r-', 'linewidth', 2)
+
+
+%%
+addpath('../emission');
+
+N = 2;
+[T_x, T_hist] = readReadLengths();
+[~, maxTind] = max(T_hist);
+
+p = distrMissMappedReads( t, T_x, N);
+P_marg = p'*T_hist./sum(T_hist);
+p_max = distrMissMappedReads( t, T_x(maxTind), 0);
+
+figure
+plot(T_x, T_hist)
+set(gca, 'xscale', 'log')
+
+figure
+plot(t, P_marg)
+hold all
+plot(t, p_max', 'r:') 
+set(gca, 'xscale', 'log')
+
+

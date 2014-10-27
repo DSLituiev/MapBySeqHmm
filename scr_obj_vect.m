@@ -3,9 +3,8 @@ dbclear if warning
 tic
 
 
-DATA_PATH = '/media/Processing/seq/data';
-% DATA_PATH = '/media/Processing/seq/olddata';
-% DATA_PATH = './data';
+% DATA_PATH = '/media/Processing/seq/data';
+DATA_PATH = './raw_data';
 USERFNCT_PATH = './dependencies';
 % addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions/binomial') );
 addpath(USERFNCT_PATH);
@@ -46,7 +45,7 @@ addpath('./emission');
 %             'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-freebayes-ems-annotation', 50, 1, 5672441};
             
            
-dataID = 'ABD/20120427-ABD159-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation';   N = 100; chr0 = 2; x0 = 17521246;
+% dataID = 'ABD/20120427-ABD159-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation';   N = 100; chr0 = 2; x0 = 17521246;
 % dataID = 'ABD/20120427-ABD159-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; chr0 = 2; x0 = 17521246;  N = 100;
 
 %  dataID = 'ABD/20130426.B-ABD173-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation'; chr0 = 3 ; x0 = 1619248;  N = 50;  % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';
@@ -58,6 +57,7 @@ dataID = 'ABD/20120427-ABD159-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation';   N
 % dataID = 'HL10/HL10-rmdup-clipOverlap-nm2-q20-temp-ems-annotation';  chr0 =  3 ;  x0 =  16473265;N = 50;
 % dataID = 'HL10/HL10-rmdup-clipOverlap-nm2-q20-ems-annotation';  chr0 =  3 ;  x0 =  16473265;N = 50;
 % dataID = 'HL10/HL10-rmdup-clipOverlap-q20-freebayes-ems-annotation';  chr0 =  3 ;  x0 =  16473265;N = 50;
+dataID = 'HL7/p889_20110125_HL7_Paired-mq0-ems-annotation-repfilt'; x0 = 5672441; chr0 = 1; N = 50;
 
 % dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-nm2-q20-temp-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
 % dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-nm2-q20-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
