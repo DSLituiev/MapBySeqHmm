@@ -11,14 +11,14 @@ if nargin>1 && ~isempty(p.Results.bkgrPath)
     refPath = p.Results.bkgrPath;
     
     if p.Results.version == 1
+    [testReads, ~,  annotation] = readSequencingDataCsvOld(testPath);
+    
+    [refReads, ~] = readSequencingDataCsvOld(refPath, 'noannotation');
+    elseif p.Results.version == 2
+        
     [testReads, ~,  annotation] = readSequencingDataCsv(testPath);
     
     [refReads, ~] = readSequencingDataCsv(refPath, 'noannotation');
-    elseif p.Results.version == 2
-        
-    [testReads, ~,  annotation] = readSequencingDataCsv2(testPath);
-    
-    [refReads, ~] = readSequencingDataCsv2(refPath, 'noannotation');
     end
     
     testPositions = [testReads.chromosome,  testReads.x];
@@ -37,9 +37,9 @@ if nargin>1 && ~isempty(p.Results.bkgrPath)
     annotation =  selectFieldIndices( annotation, iUnique);
 else
     if p.Results.version == 1
-        [testReads, ~,  annotation] = readSequencingDataCsv(testPath);
+        [testReads, ~,  annotation] = readSequencingDataCsvOld(testPath);
     elseif p.Results.version == 2
-        [testReads, ~,  annotation] = readSequencingDataCsv2(testPath);
+        [testReads, ~,  annotation] = readSequencingDataCsv(testPath);
     end
 end
 

@@ -206,7 +206,7 @@ classdef readDataVect < handle
             else
                 plotFl = '';
             end
-            [obj, mu, iT, ~] = unmixRepeatsOne( obj, 'dx', plotFl,'modeNum', 2);
+            [obj, mu, iT, ~] = unmixRepeats( obj, 'dx', plotFl,'modeNum', 2);
             fprintf('mixture: lowest (true) mode log10(dx) \t%g, dx %u\n', min(mu.dx) , round(10.^min(mu.dx)) )
             fprintf('mixture: lowest (true) mode log10(dx) \t%g, dx %u\n', max(mu.dx) , round(10.^max(mu.dx)) )
             

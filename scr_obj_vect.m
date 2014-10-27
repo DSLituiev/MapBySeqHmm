@@ -12,6 +12,7 @@ addpath(fullfile(USERFNCT_PATH, 'mtimesx'));
 addpath(fullfile(USERFNCT_PATH, 'MinMaxSelection'));
 addpath(fullfile(USERFNCT_PATH, 'newtonraphson'));
 addpath(fullfile(USERFNCT_PATH, 'fastmedfilt1d'));
+addpath(fullfile(USERFNCT_PATH, 'strjoin'));
 savepath;
 addpath('./utilites');
 addpath('./plotting');
