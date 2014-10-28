@@ -3,8 +3,8 @@ dbclear if warning
 tic
 
 
-% DATA_PATH = '/media/Processing/seq/data';
-DATA_PATH = './raw_data';
+DATA_PATH = '/media/Processing/seq/data';
+% DATA_PATH = './raw_data';
 USERFNCT_PATH = './dependencies';
 % addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions/binomial') );
 addpath(USERFNCT_PATH);
@@ -23,8 +23,8 @@ addpath('./emission');
 %= known positions of the causative SNP can be also provided here for
 %= further visualization
 %= + number of individuals in the mapping population (N)
-dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-freebayes-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
-
+% dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
+dataID = 'HL10/HL10-rmdup-clipOverlap-q20-bq20-ems-annotation';  chr0 =  3 ;  x0 =  16473265; N = 50;
 
 linkageLoosening = 1;
 % AR.Alpha = 1./(0:0.01:1);
@@ -45,9 +45,9 @@ dataID = sprintf(strcat(dataID, '_%u'), linkageLoosening);
 mkdir(fullfile('figures',dataID))
 copyfile('./ResultsInfo.txt', fullfile('figures',dataID, 'README.txt'))
 
-% [AR, ~] = readSequencingDataCsv(dataPath, 'noannotation');
+[AR, annotation] = readSequencingDataCsv(dataPath, 'noannotation');
 
-[AR, annotation] = subtractBackGroundGenotype(dataPath);
+% [AR, annotation] = subtractBackGroundGenotype(dataPath);
 AR.set_cMaxX('TAIR10-chr-counts.dat');
 
 % [AR.xPrior, AR.maxHitGene, AR.maxHitEffect,...

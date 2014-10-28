@@ -217,9 +217,12 @@ classdef readDataVect < handle
             else
                 plotFl = '';
             end
-            [obj, mu, iT, ~] = unmixRepeats( obj, 'dx', plotFl,'modeNum', 2);
-            fprintf('mixture: lowest (true) mode log10(dx) \t%g, dx %u\n', min(mu.dx) , round(10.^min(mu.dx)) )
-            fprintf('mixture: lowest (true) mode log10(dx) \t%g, dx %u\n', max(mu.dx) , round(10.^max(mu.dx)) )
+            [obj, mu] = unmixRepeats( obj, 'dx', plotFl,'modeNum', 2);
+            
+            fprintf('___________________________________\n' )
+            fprintf('mixture modes\t log10(dx)\t dx\n' )
+            fprintf('lowest (spurious)\t%g\t%u\n', min(mu.dx) , round(10.^min(mu.dx)) )
+            fprintf('highest    (true)\t%g\t%u\n', max(mu.dx) , round(10.^max(mu.dx)) )
             
             if any(isnan(obj.contrib))
                 warning('unmix:NaNs', 'NaN values in the contribution vector! replacing with "1"')

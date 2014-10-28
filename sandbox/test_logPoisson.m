@@ -42,8 +42,8 @@ plot( log10(G/M)*[1,1], [0,1], 'r-x')
 
 %% for miss-mapping
 
-y = (-8:0.2:1)';
-t = 2.^y;
+y = (-8:0.2:3)';
+t = 10.^y;
 
 N = ceil(2.^(0:1:15));
 T = 1;
@@ -73,9 +73,9 @@ N = 2;
 [T_x, T_hist] = readReadLengths();
 [~, maxTind] = max(T_hist);
 
-p = distrMissMappedReads( t, T_x, N);
+p = probSnpLogSpacingInMissMappedReads( t(:)', T_x, N , 'uniform');
 P_marg = p'*T_hist./sum(T_hist);
-p_max = distrMissMappedReads( t, T_x(maxTind), 0);
+p_max = probSnpLogSpacingInMissMappedReads( t, T_x(maxTind), N);
 
 figure
 plot(T_x, T_hist)
