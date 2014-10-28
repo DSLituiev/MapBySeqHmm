@@ -24,8 +24,8 @@ addpath('./emission');
 %= further visualization
 %= + number of individuals in the mapping population (N)
 % dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
-dataID = 'HL10/HL10-rmdup-clipOverlap-q20-bq20-ems-annotation';  chr0 =  3 ;  x0 =  16473265; N = 50;
-
+% dataID = 'HL10/HL10-rmdup-clipOverlap-q20-bq20-ems-annotation';  chr0 =  3 ;  x0 =  16473265; N = 50;
+dataID = 'HL4/p889_20110501_HL4_pairing-rmdup-clipOverlap-q20-ems-annotation';  chr0 =  3 ;  x0 =  16473265; N = 50;
 linkageLoosening = 1;
 % AR.Alpha = 1./(0:0.01:1);
 
@@ -59,7 +59,7 @@ myhist(50, AR.f, 'r')
 hold all
 myhist(50, AR.f(AR.f>0.05), 'g')
 
-AR = AR.filter('q', @(x)(x>7)); % mutant reads
+AR = AR.filter('q', @(x)(x>5)); % mutant reads
 
 AR.calcDxMin;
 AR.visStat;

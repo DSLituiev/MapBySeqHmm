@@ -33,3 +33,6 @@ dataID = 'HL10/HL10-rmdup-clipOverlap-q20-freebayes-ems-annotation';  chr0 =  3 
 dataID = 'HL7/p889_20110125_HL7_Paired-mq0-ems-annotation-repfilt'; x0 = 5672441; chr0 = 1; N = 50;
 dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-nm2-q20-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
 dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
+
+%% HL4
+dataID = 'HL4/p889_20110501_HL4_pairing-rmdup-clipOverlap-q20-ems-annotation';  chr0 =  3 ;  x0 =  16473265; N = 50;

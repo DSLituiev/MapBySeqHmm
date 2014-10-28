@@ -235,7 +235,7 @@ function  varargout = plotChromosomes(obj, fieldName, varargin)
             end
             %== define the callback function:
             dcm_obj = datacursormode(f);
-            set(dcm_obj ,'UpdateFcn',{@PlotCallbackFNt, obj.prevLine, obj, p.Results.xname, obj.prevYNames, p.Results.exp10});
+            set(dcm_obj ,'UpdateFcn',{@PlotCallbackFNt, obj.prevLine, obj, p.Results.xname, obj.prevYNames, p.Results.exp10, p.Results.select});
             
             
             %% subfunctions
