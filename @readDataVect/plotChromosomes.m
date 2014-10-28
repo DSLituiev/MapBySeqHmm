@@ -108,14 +108,16 @@ function  varargout = plotChromosomes(obj, fieldName, varargin)
                     yValues = yValues + obj.cNormConst(chr);
                 end
                 
-                if isempty(p.Results.select)
+                if strcmp(p.Results.xname,'x')
+                    maxNt(chr) = obj.cMaxX(chr);
+                elseif isempty(p.Results.select)
                     maxNt(chr) = nanmax( xValues );
-                    maxXMb(chr) = single(maxNt(chr))*1e-6;
                 else
                     maxNt(chr) = 0;
-                    maxXMb(chr) = 0;
                 end
                 
+                maxXMb(chr) = single(maxNt(chr))*1e-6;
+                    
                 if ( numel(xValues) == numel(yValues) )
                     obj.prevLine(chr, lserClmn) = doplottingcurve( xValues, yValues, inds, p );
                 elseif isscalar(yValues)

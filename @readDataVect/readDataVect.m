@@ -35,6 +35,7 @@ classdef readDataVect < handle
         xLL; % log-likelihood of observed data
         xLPost % log-posterior
         chrNumber;
+        cMaxX % chromosome length
         Mtot;
         annotation;
         pop;
@@ -110,6 +111,7 @@ classdef readDataVect < handle
                 obj.f = q./r;
                 obj.chrNumber = max(chromosome);
                 obj.Mtot = numel(x);
+                obj.applyFunctionChromosomeWise(@max, 'cMaxX', 'x');
                 obj.xPstat = -Inf(obj.Mtot , 1);
                 obj.xPsel = -Inf(obj.Mtot , 1);
                 obj.xPflat = -Inf(obj.Mtot , 1);
@@ -138,6 +140,15 @@ classdef readDataVect < handle
                 end
                 % uARnique(obj.chromosome)
                 obj = chrInds(obj);
+            end
+        end
+        
+        function applyFunctionChromosomeWise(obj, fhandle, fieldOut, fieldIn, varargin)
+            assert(isprop(obj, fieldIn))
+            assert(isprop(obj, fieldOut))
+            obj.(fieldOut) = zeros(obj.chrNumber, 1);
+            for cc = obj.chrNumber:-1:1
+                obj.(fieldOut)(cc) = feval(fhandle, obj.(fieldIn)(obj.chromosome == cc) );
             end
         end
         %% visualize statistics
@@ -232,7 +243,7 @@ classdef readDataVect < handle
 %                 KERNEL = min(KERNEL, floor(numel(obj.dx(obj.chromosome == chr))/2) - 3 );
 %                 fprintf('chromosome %u, kernel size: %u\n', chr, KERNEL)
                 obj.dxFiltered(obj.chromosome == chr) = ...
-                    smooth(obj.x(obj.chromosome == chr), obj.dx(obj.chromosome == chr),'loess');
+                    smooth(obj.x(obj.chromosome == chr), obj.dx(obj.chromosome == chr), 'loess');
             end          
         end
         
@@ -796,6 +807,8 @@ classdef readDataVect < handle
             end            
         end
         %% Baum-Welch
-        obj = runBW(obj, chr);
+        obj =  AR.runBaumWelch(obj, chr);
+        %%
+        obj = set_cMaxX(obj, filePath);
     end
 end

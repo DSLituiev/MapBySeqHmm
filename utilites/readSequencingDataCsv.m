@@ -1,4 +1,4 @@
-function [Reads, ChrNumber, annotation] = readSequencingDataCsv2(dataPath, varargin)
+function [Reads, ChrNumber, annotation] = readSequencingDataCsv(dataPath, varargin)
 %% check the input parameters
 prsr = inputParser;
 addRequired(prsr, 'dataPath', @(x)(ischar(x) & exist(x, 'file')) );

@@ -1,4 +1,4 @@
-function obj = runBW(obj, varargin)
+function obj = runBaumWelch(obj, varargin)
 % maxIter = 100;
 % chr = 1;
 
@@ -24,7 +24,7 @@ if any(isnan(obj.contrib))
 end
 %% initial values:
 % Pzm = obj.pop.Pstat;
-options = optimset('TolFun', p.Results.errTol.*obj.pop.Np, 'FunValCheck', 'on', 'display', 'off'); % set TolX
+% options = optimset('TolFun', p.Results.errTol.*obj.pop.Np, 'FunValCheck', 'on', 'display', 'off'); % set TolX
 
 dLambda = NaN(p.Results.maxIter+1, 1);
 
@@ -32,7 +32,7 @@ dLambda = NaN(p.Results.maxIter+1, 1);
 Pzm = 10.^logBetaBinomialThetaMu0(obj.pop.kvect(:), obj.pop.N, 2/3, 2e-1)';
 % binopdf(obj.pop.kvect, obj.pop.N, 0.33);
 Pzm = Pzm./sum(Pzm);
-figure
+figure('name', 'the initial distribution assumed for demixing')
 plot(obj.pop.kvect, Pzm);
 
 % ./obj.pop.Np;
@@ -161,7 +161,7 @@ if p.Results.chr~=0
     plot(obj.x(~indsTrue& obj.ci{cc}), obj.f(~indsTrue& obj.ci{cc}), 'rx')
     
     
-    figure;
+    figure('name' , 'membership on the chromosome');
     plot(obj.x( obj.ci{cc}), obj.contrib( obj.ci{cc}), 'bx-')
     
 end

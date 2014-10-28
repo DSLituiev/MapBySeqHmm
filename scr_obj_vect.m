@@ -22,50 +22,11 @@ addpath('./emission');
 %= together with the backround genotype ID
 %= known positions of the causative SNP can be also provided here for
 %= further visualization
+%= + number of individuals in the mapping population (N)
+dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-freebayes-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
 
-%= number of plants:
-% dataID = 'CH/73-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; N = 100;
-% dataID = 'CH/73-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; N = 100;
-% dataID = 'CH/91-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; N = 100;
-% dataID = 'CH/91-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
-%  dataID = 'CH/39-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation'; N = 100;
-% dataID = 'CH/39-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
 
-% dataID = '91-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
-% dataID = 'ABD/20140605.X-ABD192-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation';  N = 100;
-
-% dataList = {'ABD/20120427-ABD159-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation',   100,  2,  17521246 ;...
-%             'ABD/20120427-ABD159-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation',   100,  2,  17521246 ;...
-%             'ABD/20130426.B-ABD173-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation',  50,  3, 1619248; ...
-%             'ABD/20130426.B-ABD173-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation',  50 , 3, 1619248; ...
-%             'HL10/HL10-rmdup-clipOverlap-nm2-q20-temp-ems-annotation', 50, 3 , 16473265; ...
-%             'HL10/HL10-rmdup-clipOverlap-nm2-q20-ems-annotation',  50, 3 , 16473265; ...
-%             'HL10/HL10-rmdup-clipOverlap-q20-freebayes-ems-annotation',  50, 3 , 16473265; ...
-%             'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-nm2-q20-temp-ems-annotation', 50, 1,  5672441; 
-%             'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-nm2-q20-ems-annotation', 50, 1,  5672441; 
-%             'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-freebayes-ems-annotation', 50, 1, 5672441};
-            
-           
-% dataID = 'ABD/20120427-ABD159-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation';   N = 100; chr0 = 2; x0 = 17521246;
-% dataID = 'ABD/20120427-ABD159-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; chr0 = 2; x0 = 17521246;  N = 100;
-
-%  dataID = 'ABD/20130426.B-ABD173-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation'; chr0 = 3 ; x0 = 1619248;  N = 50;  % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';
-%  dataID = 'ABD/20130426.B-ABD173-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; chr0 = 3 ; x0 = 1619248;  N = 50;  % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';
- 
-% dataID = 'MO8_mutant_pool-rmdup-clipOverlap-q20-freebayes-ems-annotation-repfilt';
-
-% dataID = 'HL4/p889_20110501_HL4_pairing-rmdup-clipOverlap-nm2-q20-ems-annotation';  chr0 =  3 ;  x0 =  16473265;N = 50;
-% dataID = 'HL10/HL10-rmdup-clipOverlap-nm2-q20-temp-ems-annotation';  chr0 =  3 ;  x0 =  16473265;N = 50;
-% dataID = 'HL10/HL10-rmdup-clipOverlap-nm2-q20-ems-annotation';  chr0 =  3 ;  x0 =  16473265;N = 50;
-% dataID = 'HL10/HL10-rmdup-clipOverlap-q20-freebayes-ems-annotation';  chr0 =  3 ;  x0 =  16473265;N = 50;
-dataID = 'HL7/p889_20110125_HL7_Paired-mq0-ems-annotation-repfilt'; x0 = 5672441; chr0 = 1; N = 50;
-
-% dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-nm2-q20-temp-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
-% dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-nm2-q20-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
-% dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-freebayes-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
-
-    
-ALPHA = 1;
+linkageLoosening = 1;
 % AR.Alpha = 1./(0:0.01:1);
 
 %%
@@ -80,14 +41,15 @@ disp(['=======  Processing data from the run ''', dataID, ''' ======='])
 dataPath = fullfile(DATA_PATH, [dataID, '.csv'] );
 %= extract the refenece reads if the reference ID is given:
 
-dataID = sprintf(strcat(dataID, '_%u'), ALPHA);
+dataID = sprintf(strcat(dataID, '_%u'), linkageLoosening);
 mkdir(fullfile('figures',dataID))
 copyfile('./ResultsInfo.txt', fullfile('figures',dataID, 'README.txt'))
 
 % [AR, ~] = readSequencingDataCsv(dataPath, 'noannotation');
 
 [AR, annotation] = subtractBackGroundGenotype(dataPath);
-%
+AR.set_cMaxX('TAIR10-chr-counts.dat');
+
 % [AR.xPrior, AR.maxHitGene, AR.maxHitEffect,...
 %     AR.positionCDS, AR.effectAA, AR.effectCodone] = constructPriorStr(annotation);
 
@@ -113,7 +75,7 @@ AR = AR.filter('q', @(x)(x>7)); % mutant reads
 % AR = AR.filter('f', @(x)(x<1)); % SNP ratio
 AR = AR.filter('f', @(x)(x<.8)); % SNP ratio
 
- AR = AR.filter('dx', @(x)(x>120)); % SNP ratio
+% AR = AR.filter('dx', @(x)(x>120)); % SNP ratio
 % AR.unmix('plot');
 AR.unmix('plot');
 
@@ -168,9 +130,9 @@ AR.emissionHandle = @(q, r, study)emissionMixBetaBinomial(q, r, AR.pop, theta, l
 % AR.contrib = ones(size(AR.x));
 
 % AR.Alpha = 1./(0:0.01:1);
-AR.Alpha =  ALPHA;
+AR.Alpha =  linkageLoosening;
 
-AR.runBW();
+AR.runBaumWelch();
 %
 % load( 'emission_fun.mat')
 %  AR.E = E;
