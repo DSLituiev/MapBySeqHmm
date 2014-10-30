@@ -6,11 +6,11 @@ function [ P ] = distrMissMappedReads( t, T, N)
 % T  --  read length (parameter)
 % N  --  number of SNPs per read (parameter)
 
-P = LogLikelihoodMissMappedReads(t, T, N);
+P = LikelihoodMissMappedReads(t, T, N);
 
 normFactor = zeros(size(T));
 for ii = numel(T):-1:1
-    normFactor(ii) = sum(LogLikelihoodMissMappedReads(1:T(ii), T(ii), N));
+    normFactor(ii) = sum(LikelihoodMissMappedReads(1:T(ii), T(ii), N));
 end
 
 P = bsxfun(@rdivide, P, normFactor);
@@ -24,9 +24,9 @@ zeroInds = bsxfun(@and, bsxfun(@gt, t, T), N>=0);
 P(zeroInds) = 0;
 % P( t./T > 1, :) = 0;
 
-    function LL = LogLikelihoodMissMappedReads(t, T, N)
+    function LL = LikelihoodMissMappedReads(t, T, N)
         t_rat = bsxfun(@rdivide, t, T);
-        LL = bsxfun(@times,  t, bsxfun(@power, (1 - t_rat), N));
+        LL = bsxfun(@times,  bsxfun(@power, (1 - t_rat), N));
     end
 
 end

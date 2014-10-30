@@ -12,7 +12,8 @@ raw_data/
 figures.tar.gz
 
 **/*.mexw64
-
+**/*.mex???
+**/*.mexa64
 **/*.png
 **/*.jp*g
 
