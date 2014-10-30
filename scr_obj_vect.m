@@ -89,7 +89,7 @@ AR.plotChromosomes('dxFiltered', 'yscale', 'log', 'figure', 'old', 'plotfun', @(
 
 AR.clearPlots;
 
-KERNEL = 27;
+KERNEL = 0;
 AR.plotSnpRatio(KERNEL)
 fig(gcf, 'width', 24)
 
