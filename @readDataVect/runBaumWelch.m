@@ -2,7 +2,7 @@ function obj = runBaumWelch(obj, varargin)
 % maxIter = 100;
 % chr = 1;
 
-warning('runBW:info', [' PROBLEM : the SNPs are selected mostly based on the distribution,', ...
+warning('runBW:info', [' TO DO : the SNPs are selected mostly based on the distribution,', ...
     ' not much for their linkage'])
 %% check the input parameters
 p = inputParser;
@@ -119,11 +119,10 @@ for cc = chrV
             fprintf('chromosome:\t%u\t# iterations:\t%u\tchange:\t%e \n', cc, ii, dLambda(ii) )
             break
         end
-    end
-    
+    end    
+    obj.contrib(obj.ci{cc}) = lambdaOld;
 end
 
-obj.contrib(obj.ci{cc}) = lambdaOld;
 %  figure
 %  surf(obj.x(obj.ci{chr}), obj.pop.kvect, Pzm', 'linestyle', 'none'); view( 0 , 90 )
 

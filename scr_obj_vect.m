@@ -3,8 +3,8 @@ dbclear if warning
 tic
 
 
-% DATA_PATH = '/media/Processing/seq/data';
-DATA_PATH = './raw_data';
+DATA_PATH = '/media/Processing/seq/data';
+% DATA_PATH = './raw_data';
 USERFNCT_PATH = './dependencies';
 % addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions/binomial') );
 addpath(USERFNCT_PATH);
@@ -23,8 +23,7 @@ addpath('./emission');
 %= known positions of the causative SNP can be also provided here for
 %= further visualization
 %= + number of individuals in the mapping population (N)
-dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-freebayes-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
-
+dataID = 'ABD/20130426.B-ABD173-ngm-rmdup-clipOverlap-q20-nm6-ems-annotation'; chr0 = 3 ; x0 = 1619248;  N = 50;  % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';
 
 linkageLoosening = 1;
 % AR.Alpha = 1./(0:0.01:1);
@@ -76,9 +75,9 @@ AR = AR.filter('q', @(x)(x>7)); % mutant reads
 AR = AR.filter('f', @(x)(x<.8)); % SNP ratio
 
 % AR = AR.filter('dx', @(x)(x>120)); % SNP ratio
-% AR.unmix('plot');
-AR.unmix('plot');
-
+mixtObj = AR.unmix('plot');
+f = plotReadSpacingPDF(AR, mixtObj, 'all');
+clear mixtObj
 AR.filterDx();
 
 AR.plotChromosomes('dx', 'yscale', 'log', 'figure', 'new', 'plotfun', @(x,y)plot(x,y, 'rx'));
@@ -131,8 +130,12 @@ AR.emissionHandle = @(q, r, study)emissionMixBetaBinomial(q, r, AR.pop, theta, l
 
 % AR.Alpha = 1./(0:0.01:1);
 AR.Alpha =  linkageLoosening;
+% AR.contrib = 0.5*ones(numel(AR.x),1);
 
+AR.plotChromosomes('contrib', 'yscale', 'lin', 'norm', true, 'figure', 'new', 'plotfun', @(x,y)plot(x,y, 'r^', 'markersize', 6, 'linewidth', 2));
 AR.runBaumWelch();
+AR.plotChromosomes('contrib', 'yscale', 'lin', 'norm', true, 'figure', 'old', 'plotfun', @(x,y)plot(x,y, 'bv', 'markersize', 6, 'linewidth', 2));
+
 %
 % load( 'emission_fun.mat')
 %  AR.E = E;

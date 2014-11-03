@@ -3,7 +3,7 @@ ell = 1;
 em = 1;
 Qy = [-ell, ell; em, -em];
 
-t = 0:0.1:2.4;
+t = 0:0.5:1;
 
 for ii= numel(t):-1:1
     T(:,:, ii) = expm( Qy.* t(ii) );

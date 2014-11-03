@@ -11,7 +11,7 @@ dataID = 'CH/39-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
 dataID = '91-ngm-rmdup-clipOverlap-q20-ems-annotation'; N = 100;
 dataID = 'ABD/20140605.X-ABD192-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation';  N = 100;
 
-dataID = 'ABD/20120427-ABD159-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation';   N = 100; chr0 = 2; x0 = 17521246;
+dataID = 'ABD/20120427-ABD159-ngm-rmdup-clipOverlap-q20-nm6-ems-annotation';   N = 100; chr0 = 2; x0 = 17521246;
 dataID = 'ABD/20120427-ABD159-bwa-rmdup-clipOverlap-q20-nm2-ems-annotation'; chr0 = 2; x0 = 17521246;  N = 100;
 
 dataID = 'ABD/20130426.B-ABD173-ngm-rmdup-clipOverlap-q20-nm2-ems-annotation'; chr0 = 3 ; x0 = 1619248;  N = 50;  % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';

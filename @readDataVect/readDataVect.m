@@ -210,14 +210,16 @@ classdef readDataVect < handle
         end
         
         %% unmixing
-        function obj = unmix(obj, varargin)
+        [ obj, mixtObj, mu, iTrue, varargout ] = unmixRepeats( obj, firstParam, varargin );
+        
+        function [mixtObj] = unmix(obj, varargin)
             obj.calcDxMin;
             if nargin>1 && ~isempty(varargin{1})
                 plotFl = varargin{1};
             else
                 plotFl = '';
             end
-            [obj, mu] = unmixRepeats( obj, 'dx', plotFl,'modeNum', 2);
+            [obj, mixtObj, mu] = unmixRepeats( obj, 'dx', plotFl,'modeNum', 2);
             
             fprintf('___________________________________\n' )
             fprintf('mixture modes\t log10(dx)\t dx\n' )
