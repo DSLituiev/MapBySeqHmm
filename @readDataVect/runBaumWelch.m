@@ -37,7 +37,7 @@ plot(obj.pop.kvect, Pzm);
 
 % ./obj.pop.Np;
 lambda0 = 0.8 ;
-
+THETA = 1e-2;
 % obj.contrib(:) = lambda0 + 0.2*(rand(obj.Mtot, 1) - 0.5);
 chrV = p.Results.chr;
 if ~chrV
@@ -50,7 +50,7 @@ for cc = chrV
     Px_zm_y1 = zeros(obj.M(cc), obj.pop.Np);
     Px_zm_y0 = zeros(obj.M(cc), obj.pop.Np);
     
-    obj.calcT(cc, obj.Alpha(1));
+    obj.setTransitionMatrix( cc );
     %%
     
     % dLambda(1) = 1;
@@ -58,28 +58,25 @@ for cc = chrV
     lambda1EstLog = -Inf(obj.M(cc), 1);
     
     for ii = 1 : p.Results.maxIter
-        
-        [mE1, mE0] = mixBetaBinomUniform(double(obj.q), double(obj.r),  obj.pop.N, 1e-2);
+        [mE1, mE0] = mixBetaBinomUniform(double(obj.q(obj.ci{cc})), double(obj.r(obj.ci{cc})),  obj.pop.N, THETA);
         mE0 = repmat(mE0, [1, obj.pop.Np]);
 
         %% P [x_m | z_m, lambda_m]
         % lambda_m = obj.contrib
-        obj.E = bsxfun(@plus,...
-            bsxfun(@times, mE1, obj.contrib), ...
-            bsxfun(@times,mE0, (1-obj.contrib) ) ...
+        obj.HMM{cc}.E = bsxfun(@plus,...
+            bsxfun(@times, mE1, obj.contrib(obj.ci{cc})), ...
+            bsxfun(@times, mE0, (1-obj.contrib(obj.ci{cc})) ) ...
             );
         
-        % obj.calcEmission;
-        obj = obj.crossMatr(cc);
-        obj = obj.cumMatr(cc);
+        obj.HMM{cc}.cumMatr();
 
         %% P[ x_ | z_m, lambda_m ]
         %= P[ x_  | z_m, y_m ]
-        rawFB = obj.logAlpha{cc} + obj.logBeta{cc} - log10(obj.E(obj.ci{cc}, :)) ;
+        rawFB = obj.HMM{cc}.logAlpha + obj.HMM{cc}.logBeta - log10( obj.HMM{cc}.E ) ;
         % any(isnan(rawFB),2)
         rawFB(isnan(rawFB(:,1)), 1) = -Inf;
-        Px_zm_y1 = rawFB + log10(mE1(obj.ci{cc}, :)) ;
-        Px_zm_y0 = rawFB + log10(mE0(obj.ci{cc}, :)) ;
+        Px_zm_y1 = rawFB + log10(mE1) ;
+        Px_zm_y0 = rawFB + log10(mE0) ;
         notNan = ~any(isnan(rawFB),2);
         
         logQ_zm = bsxfun(@times,  lambdaOld(notNan) , Px_zm_y1(notNan, :)) + ...
@@ -100,7 +97,7 @@ for cc = chrV
         %     figure; plot(obj.x(obj.ci{chr}), lambdaEst);
         %     figure; plot(lambdaEst);
         
-        dLambda(ii) = norm(lambdaOld- lambdaNew)./numel(lambdaNew);
+        dLambda(ii) = norm(lambdaOld - lambdaNew)./numel(lambdaNew);
         
         
         if any(isnan(lambdaNew))

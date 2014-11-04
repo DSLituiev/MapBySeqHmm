@@ -40,19 +40,15 @@ classdef readDataVect < handle
         annotation;
         pop;
         chrMap;
-        xkPout;
-        xPout;
-        xPstat;
-        xkPstat;
-        cPstat;
-        xPsel;
-        xkPsel;
-        cPsel;
-        cPtot;
         xPflat;
-        xkPflat;
+        xPstat;
+        xPsel;
         xLogOdds;
         xPselNorm;
+        xkPflat;
+        cPsel;
+        cPstat;
+        cPtot;
         Pz;
         prevFig;
         prevAxes;
@@ -69,6 +65,7 @@ classdef readDataVect < handle
         xPy
         f0
         z
+        HMM
     end
     
     properties (SetAccess = private, GetAccess = private)
@@ -109,28 +106,27 @@ classdef readDataVect < handle
                 obj.q = q;
                 obj.r = r;
                 obj.f = q./r;
-                obj.chrNumber = max(chromosome);
+                obj.chrNumber = max(chromosome(:));
                 obj.Mtot = numel(x);
                 obj.applyFunctionChromosomeWise(@max, 'cMaxX', 'x');
-                obj.xPstat = -Inf(obj.Mtot , 1);
-                obj.xPsel = -Inf(obj.Mtot , 1);
-                obj.xPflat = -Inf(obj.Mtot , 1);
-                obj.xPout = -Inf(obj.Mtot , 1);
-                obj.xPosterior = zeros(obj.Mtot , 1);
-                obj.xPosteriorNorm = zeros(obj.Mtot, 1);
-                
-                obj.xPselNorm = -Inf(obj.Mtot , 1);
-                obj.cPstat = -Inf(obj.chrNumber , 1);
-                obj.cPsel = -Inf(obj.chrNumber , 1);
-                obj.cPosterior = -Inf(obj.chrNumber , 1);
-                
-                obj.xLogOdds =  zeros(obj.Mtot , 1);
-                
-                
-                obj.T = cell(obj.chrNumber, 1);
-                obj.A = cell(obj.chrNumber, 1);
-                obj.logAlpha = cell(obj.chrNumber, 1);
-                obj.logBeta = cell(obj.chrNumber, 1);
+%                 obj.xPstat = -Inf(obj.Mtot , 1);
+%                 obj.xPsel = -Inf(obj.Mtot , 1);
+%                 obj.xPflat = -Inf(obj.Mtot , 1);
+%                 obj.xPout = -Inf(obj.Mtot , 1);
+%                 obj.xPosterior = zeros(obj.Mtot , 1);
+%                 obj.xPosteriorNorm = zeros(obj.Mtot, 1);
+%                 
+%                 obj.xPselNorm = -Inf(obj.Mtot , 1);
+%                 obj.cPstat = -Inf(obj.chrNumber , 1);
+%                 obj.cPsel = -Inf(obj.chrNumber , 1);
+%                 obj.cPosterior = -Inf(obj.chrNumber , 1);
+%                 
+%                 obj.xLogOdds =  zeros(obj.Mtot , 1);
+%                                 
+%                 obj.T = cell(obj.chrNumber, 1);
+%                 obj.A = cell(obj.chrNumber, 1);
+%                 obj.logAlpha = cell(obj.chrNumber, 1);
+%                 obj.logBeta = cell(obj.chrNumber, 1);
                 if (nargin>5)
                     %                     obj.qual = varargin{1};
                     %                     obj.notaRepeat = varargin{2};
@@ -262,64 +258,8 @@ classdef readDataVect < handle
                 obj.dx(inds,1) = feval( fh, dxPair);
             end
         end
-        %% filtering
-        function obj = filter(obj, field, fh, varargin)
-            inds = fh(obj.(field));
-            if ~isprop(obj, field)
-                error('readDataVect:filter:noFieldFound', 'no field  "%s" found!', field)
-            end
-            if isempty(obj.(field) )
-                error('readDataVect:filter:noFieldFound', 'the field  "%s" is empty! \n Cannot perform filtering', field)
-            end
-            if sum(inds) == 0
-                error('readDataVect:filter:empty', 'no entries are left after filtering')
-            end
-            if nargin>3
-                field2 = varargin{1};
-                fh2 = varargin{2};
-                inds = inds &  fh2(obj.(field2));
-            end
-            
-            obj.chromosome = obj.chromosome(inds);
-            obj.x = obj.x(inds);
-            obj.q = obj.q(inds);
-            obj.r = obj.r(inds);
-            obj.f = obj.q./obj.r;
-            if obj.flagWT
-                obj.qw = obj.qw(inds);
-                obj.rw = obj.rw(inds);
-                obj.fw = obj.qw./obj.rw;
-            end
-            
-            obj.chrNumber = max(obj.chromosome);
-            obj.Mtot = numel(obj.x);
-            obj.xPout = -Inf(obj.Mtot, 1);
-            obj.xPstat = -Inf(obj.Mtot, 1);
-            obj.xPsel  = -Inf(obj.Mtot, 1);
-            obj.xPselNorm = -Inf(obj.Mtot, 1);
-            obj.xPflat = -Inf(obj.Mtot, 1);
-            obj.xLogOdds = zeros(obj.Mtot, 1);
-            obj.E = [];
-            obj.contrib = [];
-            obj.calcDxMin();
-            
-            
-            if ~isempty(obj.xPrior)
-                obj.xPrior = obj.xPrior(inds);
-                obj.xPosterior = -Inf(obj.Mtot, 1);
-                obj.xPosteriorNorm = -Inf(obj.Mtot, 1);
-            end
-            
-            optFields = {'qual', 'dxFiltered', 'notaRepeat', 'geneID', 'geneSO', 'mutCDS',...
-                'mutProt', 'mutPosProt', 'xRnaPrior', 'xRnaPresence', 'xArrayPrior', 'snpFrequencyInEcotypes', 'snpEcotypesInfo'};
-            
-            for ii = numel(optFields):-1:1
-                filterField(obj, optFields{ii} , inds);
-            end
-            
-            obj.chrInds();
-            
-        end
+       %% filtering
+       filter(obj, field, fh, varargin)
         %%
         function filterField(obj, fieldName, inds)
             if ~isempty(obj.(fieldName))
@@ -365,12 +305,12 @@ classdef readDataVect < handle
         
         %% operations on chromosomes
         function normalizeChromosomes(obj)
-            obj.cPtot    = calcMarginal( [obj.cPstat, obj.cPsel], 2 );
+            obj.cPtot = calcMarginal( [obj.cPstat(:), obj.cPsel(:)], 2 );
             %             obj.cPostTot = calcMarginal( [obj.cPstat, obj.cPosterior], 2 );
             
             obj.cPtot(isnan(obj.cPtot)) = 0;
             for chr = obj.chrNumber:-1:1
-                obj.xPselNorm(obj.ci{chr})      = obj.xPsel(obj.ci{chr})      - obj.cPtot(chr);
+                obj.xPselNorm(obj.ci{chr})      = obj.xPsel(obj.ci{chr}) - obj.cPtot(chr);
                 %                 obj.xPosteriorNorm(obj.ci{chr}) = obj.xPosterior(obj.ci{chr}) - obj.cPostTot(chr);
             end
             
@@ -387,12 +327,7 @@ classdef readDataVect < handle
             
         end
         
-        function plotChromosome2D(obj, chr)
-            Z =  bsxfun( @minus, obj.xkPflat , calcMarginal( obj.xkPflat , 2) );
-            figure; 
-            surf( obj.x(obj.chromosome == chr)*1e-6, obj.pop.kvect, Z(obj.chromosome == chr,:)', 'linestyle', 'none'); 
-            view(0,90)
-        end
+        f = plotChromosome2D(obj, chr);
         
         function varargout = calcMleZ(obj, varargin)
             [~, obj.z] =  max(obj.xkPflat,[], 2 );
@@ -404,101 +339,7 @@ classdef readDataVect < handle
             varargout{1} = obj.z;
         end
         
-        function [obj, varargout] = run(obj, varargin)
-            obj.lastWarn = lastwarn;
-            p = inputParser;
-            addRequired(p, 'obj', @isobject);
-            addOptional(p, 'chr',  0,  @(x)(isscalar(x) && x<= obj.chrNumber));
-            addOptional(p, 'plFlag',  '',  @ischar );
-            %           addParamValue(p,     'exp10',             false, @isscalar);
-            parse(p, obj, varargin{:});
-            
-            if isempty(obj.Alpha)
-                obj.Alpha = 1;
-                fprintf('setting Alpha to 1\n')
-            end
-            
-            if  p.Results.chr>0
-                chrV = p.Results.chr;
-            else
-                chrV = 1:obj.chrNumber;
-            end
-            
-            for chr = chrV
-                ticInit = tic;
-                fprintf('processing the chromosome\t%u\t...', chr)
-                msgLength = 0;
-                for Alpha0 = obj.Alpha
-                    if numel(obj.x(obj.chromosome==chr))<2
-                        continue
-                    end
-                    obj = obj.calcT(chr, Alpha0);
-                    obj = obj.crossMatr(chr);
-                    obj = obj.cumMatr(chr);
-                    
-                    obj = obj.runFBflat(chr);
-                    obj = obj.runFBstat(chr);
-                    obj = obj.runFBselection(chr);
-                    
-                    obj.xPsel(isnan(obj.xPsel)) = -Inf; %%%%%%%%%
-                    obj.cPstat(chr) = calcMarginal(obj.xPstat(obj.ci{chr}));
-                    obj.cPsel(chr)  = calcMarginal(obj.xPsel( obj.ci{chr}));
-                    
-                    obj.cNormConst(chr) = - ( obj.pop.Np + calcMarginal(obj.xPflat(obj.ci{chr}) ) ) ;
-                    obj.xLogOdds(obj.ci{chr}) =  obj.xPsel(obj.ci{chr}) -  obj.xPstat(obj.ci{chr});
-                    
-                    if ~isempty(obj.xPrior) &&  numel(obj.xPrior) == numel(obj.xPsel)
-                        obj.xPosterior(obj.ci{chr},1) = obj.xPsel(chr) + obj.xPrior(obj.ci{chr});
-                        obj.cPosterior(chr) = calcMarginal(obj.xPosterior(obj.ci{chr}));
-                    else
-                        warning('readDataVect:run:noPrior', 'Prior is not defined!\n')
-                    end
-                    
-                    if strcmpi('plot', p.Results.plFlag)
-                        varargout{1} = figure;
-                        subplot(2,1,1)
-                        plot(obj.x(obj.ci{chr}), obj.xPstat(obj.ci{chr}), 'g-')
-                        hold all
-                        plot(obj.x(obj.ci{chr}), obj.xPout(obj.ci{chr}), 'r-')
-                        plot(obj.x(obj.ci{chr}), obj.xPflat(obj.ci{chr}), 'b-')
-                        legend({'stationary', 'selection', 'flat'})
-                        
-                        subplot(2,1,2)
-                        plot(obj.x(obj.ci{chr}), obj.xPstat(obj.ci{chr})  + obj.cNormConst(chr) , 'g-')
-                        hold all
-                        plot(obj.x(obj.ci{chr}), obj.xPsel(obj.ci{chr}) + obj.cNormConst(chr) , 'r-')
-                        legend({'stationary norm',  'selection norm'})
-                        
-                    elseif nargout>1
-                        varargout{1} = [];
-                    end
-                    obj.T{chr} = [];
-                    obj.A{chr} = [];
-                    obj.logAlpha{chr} = [];
-                    obj.logBeta{chr} = [];
-                    
-                    if strcmp(obj.lastWarn, lastwarn)
-                        obj.lastWarn = '';
-                    elseif ~isempty(lastwarn)
-                        obj.lastWarn = lastwarn;
-                    end
-                    
-                    if isempty(obj.lastWarn) || strcmp(obj.lastWarn, 'Directory already exists.')
-                        fprintf(repmat('\b',1, msgLength));
-                    else
-                        fprintf('\n')
-                    end
-                    
-                    textA = sprintf('Alpha =\t%4.2f\t...', Alpha0);
-                    fprintf(textA)
-                    msgLength = numel(textA);
-                end
-                
-                
-                fprintf(repmat('\b',1, msgLength));
-                fprintf('\b\b\b took\t%4.2f\t s \t SNPs:\t%u \n',  toc(ticInit), obj.M(chr) )
-            end % chr
-        end
+        [obj, varargout] = run(obj, varargin)
         
         function includeRnaPresence(obj)
             obj.xPrior(~obj.xRnaPresence) = -Inf;
@@ -525,176 +366,35 @@ classdef readDataVect < handle
         %% emission
         obj = calcEmission(obj);
         %% transition
+        function setTransitionMatrix(obj, chr)
+            t =  0.01 * mapPhysicalToGeneticPositionCentiMorgan(obj, chr);
+            if iscell(obj.HMM) && numel(obj.HMM)>=chr && isobject(obj.HMM{chr}) 
+                obj.HMM{chr}.t = t;
+            else % initialise it
+                 obj.HMM{chr} = hmm_cont(obj.pop, [], t);
+            end
+            obj.HMM{chr}.calcT();
+        end
+        
+        function x_cM = mapPhysicalToGeneticPositionCentiMorgan(obj, chr)
+            % interpolates position of the data points based on the
+            % supplied genetic map
+            assert( ~isempty(obj.chrMap(chr)) )
+            if isscalar(obj.chrMap(chr)) && ~isstruct(obj.chrMap(chr))
+                x_cM =  obj.chrMap(chr) * obj.x(obj.ci{chr});
+            else
+                x_cM = interp1(obj.chrMap(chr).nt, obj.chrMap(chr).cM, double(obj.x(obj.ci{chr})),'pchip','extrap');
+            end
+        end
+        
         function dx_cM = recdistances(obj, chr)
             % interpolates distances between the data points based on the
             % supplied genetic map
-            x_cM = interp1(obj.chrMap(chr).nt, obj.chrMap(chr).cM, double(obj.x(obj.ci{chr})),'pchip','extrap');
-            dx_cM = abs(diff(x_cM));
-        end
-        
-        function obj = calcT(obj, chr, Alpha)
-            if isempty(obj.chrMap)
-                error('calcT:noChrMap', 'chromosome genetic map has not been supplied! \n please assign obj.chrMap = cm;\n cm.nt[M x 1];\n cm.cM[M x 1]' )
-            end
-            if ~isscalar(Alpha)
-                error('calcT:vectorAlpha', 'Alpha must be a scalar')
-            end
-            %= calculate Transition matrices
-            obj.T{chr} = zeros(obj.pop.Np, obj.pop.Np, obj.M(chr)-1);
-            %             tvect = Alpha * 0.01* abs(diff(recdistances(obj.chrMap(chr), obj.x(obj.ci{chr})))) ;
-            tvect = Alpha * 0.01* obj.recdistances(chr);
-            %= calculate
-            for ii = 1:(obj.M(chr)-1)
-                if tvect(ii)~=0 && ~isinf(tvect(ii))
-                    obj.T{chr}(:,:, ii) = expm(obj.pop.Q*tvect(ii));
-                elseif  tvect(ii)==0
-                    obj.T{chr}(:,:, ii) = eye(obj.pop.Np);
-                elseif tvect(ii)== Inf
-                    obj.T{chr}(:,:, ii) = repmat(obj.pop.Pstat, [ obj.pop.Np, 1]);
-                end
-            end
-            %= sanity check
-            if   any(obj.T{chr}(:)<0)
-                if abs(obj.T{chr}(obj.T{chr}(:)<0)) > 1e-25
-                    error('transition3D_expm:TNegInput', 'T matrix has negative values!')
-                else
-                    [~, msgid] = lastwarn;
-                    if ~strcmpi(msgid, 'transition3D_expm:TNegInput')
-                        warning('transition3D_expm:TNegInput', ['T matrix has very small negative values (possibly numeric error)! \n',...
-                            ' Replacing negative numbers by zeros'])
-                    end
-                    obj.T{chr}(obj.T{chr}(:)<0) = 0;
-                end
-            end
-            
-        end
-        %% cumulative matrices 'logAlpha' and 'logBeta'
-        function obj = cumMatr(obj, chr)
-            % function obj = cumMatrSafe(obj)
-            if ~isempty(obj.Np)
-                
-                obj.logAlpha{chr} = -inf(obj.M(chr), obj.Np);
-                obj.logBeta{chr}  = -inf(obj.M(chr), obj.Np);
-                
-                %% forward
-                Ac = obj.E( obj.cEnd(chr), :)';
-                obj.logAlpha{chr}(obj.M(chr), 1: obj.Np) = log10(Ac');
-                
-                scalePrev = 0;
-                scaleA = zeros(obj.M(chr), 1);
-                
-                for m = (obj.M(chr) - 1):-1:1
-                    Ac = obj.A{chr}(:,:, m) * (Ac * 10.^(scaleA(m+1) - scalePrev) );
-                    obj.logAlpha{chr}(m, :)= log10(Ac) - scaleA(m+1);
-                    scalePrev = scaleA(m + 1);
-                    scaleA(m) = - max( obj.logAlpha{chr}( m, :) );
-                end
-                
-                %% backward
-                Bc = ones(1, obj.Np);
-                obj.logBeta{chr}(1, 1: obj.Np) = 0;
-                
-                scalePrev = 0;
-                scaleB = zeros(obj.M(chr)-1, 1);
-                
-                for m = 2:1:obj.M(chr)
-                    Bc = Bc * obj.A{chr}(:,:, m-1)' * (10.^(scaleB(m-1) - scalePrev));
-                    obj.logBeta{chr}(m, :) = log10(Bc) - scaleB(m-1);
-                    scalePrev = scaleB(m-1);
-                    scaleB(m) = - max(obj.logBeta{chr}(m, :));
-                end
-                
+            if isscalar(obj.chrMap(chr))
+                dx_cM =  obj.chrMap(chr) * abs(diff(obj.x(obj.ci{chr})));
             else
-                warning('cumMatrSafe:emptyNp', 'define T first!')
-            end
-        end
-        %% crossMatrix A
-        function obj = crossMatr(obj, chr)
-            if isempty(obj.E)
-                obj.calcEmission
-            end
-            
-            if ~( numel(obj.T) < chr) && ~isempty(obj.T{chr})
-                obj.A{chr} =  bsxfun(@times, ...
-                    permute( obj.E(obj.cSta(chr):(obj.cEnd(chr)-1), :), [2, 3, 1] ), obj.T{chr} ) ;
-            else
-                error('crossMatr:emptyT', 'define transition matrix T first!');
-            end
-            
-            %             fprintf('matrix A calculated for the chr %u\n', chr);
-        end
-        %% forward-backward wrapping functions
-        function obj = runFB(obj, Pin, chr)
-            if nargin<2
-                obj.Pz = ones(1, obj.Np);
-            else
-                obj.Pz = Pin;
-            end
-            obj = runFBinternal(obj, chr);
-        end
-        
-        function obj = runFBstat(obj, chr)
-            obj.Pz = obj.pop.Pstat;
-            obj = runFBinternal(obj, chr);
-            obj.xkPstat(obj.ci{chr}, :)  = obj.xkPout(obj.ci{chr}, :) ;
-            obj.xPstat(obj.ci{chr}) = obj.xPout(obj.ci{chr});% median(obj.xPout);
-        end
-        
-        function obj = runFBflat(obj, chr)
-            obj.Pz = ones(1, obj.Np)./obj.Np;
-            obj = runFBinternal(obj, chr);
-            obj.xkPflat(obj.ci{chr}, :)  = obj.xkPout(obj.ci{chr}, :) ;
-            obj.xPflat(obj.ci{chr}) = obj.xPout(obj.ci{chr});
-        end
-        
-        function PFF = getPoutFullFlat(obj, chr)
-            if isempty(obj.xkPflat)
-                obj = runFBflat(obj, chr);
-            end
-            PFF = obj.xkPout;
-        end
-        
-        function obj = runFBselection(obj, chr)
-            obj.Pz = zeros(1, obj.Np);
-            if obj.selType
-                obj.Pz(obj.Np) = 1;
-            else
-                obj.Pz(1) = 1;
-            end
-
-%             lambda = 1;
-%             obj.Pz = lambda.^(obj.pop.N - obj.pop.kvect)./factorial(obj.pop.N - obj.pop.kvect) .* exp(-lambda);
-            
-%             obj.Pz = binopdf(obj.pop.kvect, 2*obj.pop.N, 1/2*(1 - 1/obj.pop.N) );
-%             obj.Pz = obj.Pz./sum(obj.Pz);
-%             figure; plot( obj.Pz )
-            
-            obj = runFBinternal(obj, chr);
-            obj.xkPsel(obj.ci{chr}, :)  = obj.xkPout(obj.ci{chr}, :) ;
-            obj.xPsel(obj.ci{chr}) = obj.xPout(obj.ci{chr});  % median(obj.xPout);
-        end
-        
-        %% FB - final step
-        function obj = runFBinternal(obj, chr)
-            if isempty(obj.A)|| isempty(obj.logAlpha ) || isempty(obj.logAlpha )
-                obj = obj.crossMatr(chr);
-                obj = obj.cumMatr(chr);
-            end
-            if size(obj.Pz,2) ~= obj.pop.Np && ~isscalar(obj.Pz)
-                error('runFBinternal:wrongPzSize','wrong prior distribution for z_m is submitted!')
-            end
-            
-            obj.xkPout(obj.ci{chr}, :) = bsxfun(@plus, (obj.logAlpha{chr} + obj.logBeta{chr}), log10(obj.Pz(:)'));
-            % obj.xkPout(obj.ci{chr}, :) = bsxfun(@plus, nansum([obj.logAlpha{chr}, obj.logBeta{chr}],2), log10(obj.Pz));
-%             infInds = isinf(obj.logAlpha{chr}) & isinf(obj.logBeta{chr});
-%             figure; p= pcolor(obj.logBeta{chr}); set(p, 'linestyle','none')
-%             obj.xkPout(obj.Sta(chr), :)
-            obj.xPout(obj.ci{chr}) = calcMarginal(obj.xkPout(obj.ci{chr}, :), 2);
-            if any(isnan(obj.xPout(obj.ci{chr})))
-                warning('runFBinternal:someEntriesAreNaN', 'some entries in the probability vector are NaN!')
-            end
-            if all(isnan(obj.xPout(obj.ci{chr})))
-                error('runFBinternal:allEntriesAreNaN', 'all entries in the probability vector are NaN!')
+                x_cM = interp1(obj.chrMap(chr).nt, obj.chrMap(chr).cM, double(obj.x(obj.ci{chr})),'pchip','extrap');
+                dx_cM = abs(diff(x_cM));
             end
         end
         
@@ -815,5 +515,13 @@ classdef readDataVect < handle
         obj =  AR.runBaumWelch(obj, chr);
         %%
         obj = set_cMaxX(obj, filePath);
+        function [cc, xIndOnChr] = findChrByIndex(obj, ind)
+            assert( all(ind <= obj.Mtot), 'index/ces out of bound!')
+            cInds = bsxfun(@le, obj.cSta(:)', ind(:)) & bsxfun(@le, ind(:), obj.cEnd(:)');
+            assert( all(sum(cInds,2) == 1), 'ambigous mapping!')
+            dict = double(1:obj.chrNumber)';
+            cc = double(cInds)*dict;
+            xIndOnChr = ind - obj.cSta(cc)' + 1;
+        end
     end
 end

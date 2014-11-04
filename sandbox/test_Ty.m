@@ -1,9 +1,13 @@
 
+USERFNCT_PATH = '../dependencies';
+addpath(USERFNCT_PATH);
+addpath(fullfile(USERFNCT_PATH, 'mtimesx'));
+
 ell = 1;
 em = 1;
 Qy = [-ell, ell; em, -em];
 
-t = 0:0.5:1;
+t = 0:0.1:2.4;
 
 for ii= numel(t):-1:1
     T(:,:, ii) = expm( Qy.* t(ii) );

@@ -27,6 +27,7 @@ classdef population < hgsetget
             end
             
         end
+        %%
         
         function obj = changePopulation(obj, Nin, varargin)
             if nargin>1

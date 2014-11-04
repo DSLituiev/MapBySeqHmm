@@ -3,16 +3,10 @@ dbclear if warning
 tic
 
 
-DATA_PATH = '/media/Processing/seq/data';
-% DATA_PATH = './raw_data';
+% DATA_PATH = '/media/Processing/seq/data';
+DATA_PATH = './raw_data';
 USERFNCT_PATH = './dependencies';
-% addpath(fullfile(USERFNCT_PATH, 'MATLABuserfunctions/binomial') );
-addpath(USERFNCT_PATH);
-addpath(fullfile(USERFNCT_PATH, 'mtimesx'));
-addpath(fullfile(USERFNCT_PATH, 'MinMaxSelection'));
-addpath(fullfile(USERFNCT_PATH, 'newtonraphson'));
-addpath(fullfile(USERFNCT_PATH, 'fastmedfilt1d'));
-addpath(fullfile(USERFNCT_PATH, 'strjoin'));
+addpath(genpath(USERFNCT_PATH));
 savepath;
 addpath('./utilites');
 addpath('./plotting');
@@ -23,7 +17,7 @@ addpath('./emission');
 %= known positions of the causative SNP can be also provided here for
 %= further visualization
 %= + number of individuals in the mapping population (N)
-dataID = 'ABD/20130426.B-ABD173-ngm-rmdup-clipOverlap-q20-nm6-ems-annotation'; chr0 = 3 ; x0 = 1619248;  N = 50;  % bkgrID = 'ABD241-rmdup-clipOverlap-q20-freebayes';
+dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
 
 linkageLoosening = 1;
 % AR.Alpha = 1./(0:0.01:1);
@@ -58,7 +52,7 @@ myhist(50, AR.f, 'r')
 hold all
 myhist(50, AR.f(AR.f>0.05), 'g')
 
-AR = AR.filter('q', @(x)(x>7)); % mutant reads
+AR.filter('q', @(x)(x>7)); % mutant reads
 
 AR.calcDxMin;
 AR.visStat;
@@ -68,11 +62,11 @@ exportfig(gcf, fullfile('figures', dataID,'qualityCtrl'), 'format','eps', 'color
 % visualizeAnnotationStat(annotation)
 
 
-AR = AR.filter('r', @(x)(x<quantile(AR.r, 0.98))); % mutant reads
-AR = AR.filter('q', @(x)(x>7)); % mutant reads
+AR.filter('r', @(x)(x<quantile(AR.r, 0.98))); % mutant reads
+AR.filter('q', @(x)(x>7)); % mutant reads
 
 % AR = AR.filter('f', @(x)(x<1)); % SNP ratio
-AR = AR.filter('f', @(x)(x<.8)); % SNP ratio
+AR.filter('f', @(x)(x<.8)); % SNP ratio
 
 % AR = AR.filter('dx', @(x)(x>120)); % SNP ratio
 mixtObj = AR.unmix('plot');
@@ -157,7 +151,7 @@ fig(gcf, 'width', 24)
 exportfig(gcf, fullfile('figures', dataID, 'zMLE'), 'format','eps', 'color', 'rgb')
 
 if exist('chr0', 'var')
-    AR.plotChromosome2D(chr0)
+    AR.plotChromosome2D(chr0);
 end
 
 
