@@ -23,10 +23,6 @@ classdef readDataVect < dynamicprops % < handle
         dxFiltered;
         emissionHandle;
         Alpha;
-        T = {};
-        A = {};
-        logAlpha = {};
-        logBeta = {};
         ci = {}; % chromosome indices (cell)
         cSta; % chromosome start (vector)
         cEnd; % chromosome end   (vector)
@@ -90,14 +86,9 @@ classdef readDataVect < dynamicprops % < handle
     
     properties  (Dependent = true)
         Np; % N + 1 , where N is the number of individuals
-        nPlLines;
     end
     
     methods
-        
-        function nPlLines = get.nPlLines(obj)
-            nPlLines = numel(obj.prevYNames);
-        end
         
         function obj = readDataVect(chromosome, x,q,r, varargin)
             if nargin>0 && numel(q) == numel(x) && numel(r) == numel(x)
@@ -109,24 +100,6 @@ classdef readDataVect < dynamicprops % < handle
                 obj.chrNumber = max(chromosome(:));
                 obj.Mtot = numel(x);
                 obj.applyFunctionChromosomeWise(@max, 'cMaxX', 'x');
-%                 obj.xPstat = -Inf(obj.Mtot , 1);
-%                 obj.xPsel = -Inf(obj.Mtot , 1);
-%                 obj.xPflat = -Inf(obj.Mtot , 1);
-%                 obj.xPout = -Inf(obj.Mtot , 1);
-%                 obj.xPosterior = zeros(obj.Mtot , 1);
-%                 obj.xPosteriorNorm = zeros(obj.Mtot, 1);
-%                 
-%                 obj.xPselNorm = -Inf(obj.Mtot , 1);
-%                 obj.cPstat = -Inf(obj.chrNumber , 1);
-%                 obj.cPsel = -Inf(obj.chrNumber , 1);
-%                 obj.cPosterior = -Inf(obj.chrNumber , 1);
-%                 
-%                 obj.xLogOdds =  zeros(obj.Mtot , 1);
-%                                 
-%                 obj.T = cell(obj.chrNumber, 1);
-%                 obj.A = cell(obj.chrNumber, 1);
-%                 obj.logAlpha = cell(obj.chrNumber, 1);
-%                 obj.logBeta = cell(obj.chrNumber, 1);
                 if (nargin>5)
                     %                     obj.qual = varargin{1};
                     %                     obj.notaRepeat = varargin{2};
@@ -134,10 +107,12 @@ classdef readDataVect < dynamicprops % < handle
                     %                         obj.annotation = varargin{3};
                     %                     end
                 end
-                % uARnique(obj.chromosome)
                 obj = chrInds(obj);
             end
         end
+        
+        %% linkage map
+        setLinkageMap(obj,  mapPath)
         
         function applyFunctionChromosomeWise(obj, fhandle, fieldOut, fieldIn, varargin)
             assert(isprop(obj, fieldIn))
@@ -147,52 +122,8 @@ classdef readDataVect < dynamicprops % < handle
                 obj.(fieldOut)(cc) = feval(fhandle, obj.(fieldIn)(obj.chromosome == cc) );
             end
         end
-        %% visualize statistics
-        function f_out = visualizeStat(obj)
-            nBins = max( floor(numel(obj.x)/25), 7 );
-            %==
-            df = 0.01*ceil(100/nBins);
-            fx = df/2:df:(1-df/2);
-            %==
-            dr = 0.05;
-            rx = 0:dr:(log10(max(obj.r))-dr/2);
-            %==
-            f_out = figure('name', 'descriptive statistics');
-            
-            subplot(2,2,1)
-            myhist100(fx,  obj.f, 'r', 'edgecolor', 'none');
-            set(gca, 'tickDir', 'out')
-            title('SNP ratio [f]')
-            xlabel('f');
-            
-            subplot(2,2,2)
-            [~, modeX] = myhist100LogX(rx,  log10(obj.r), 'r', 'edgecolor', 'none');
-            set(gca, 'tickDir', 'out')
-            title( sprintf('coverage / read number per locus [r], \n median[r] = %u, mode[r] = %u', floor(median(obj.r)), floor(modeX)) );
-            xlabel('r [log_{10}-scaled]');
-            
-            
-            subplot(2,2,3)
-            scatter(log10(obj.r), obj.f, 'r');
-            xlabel('log_{10}(r)'); ylabel('f')
-            set(gca, 'tickDir', 'out')
-            title('read number [r] vs SNP ratio [f]')
-            set(gca, 'ylim', [0,1])
-            
-            subplot(2,2,4)
-            
-            myhistLogX(nBins , log10(obj.dx), 'r')
-            %             [hy, hx] = hist( log10(obj.dx), floor(numel(obj.dx)/25));
-            %             bar(10.^hx, hy)
-            set(gca, 'tickDir', 'out', 'xscale', 'log')
-            %             xlim([0, 700])
-            title('nt to closest neighbour SNP [${\Delta} x$]', 'interpreter', 'latex')
-            xlabel('${\Delta} x$ [log$_{10}$-scaled]', 'interpreter', 'latex');
-            
-            %             hist(obj.qual, 0:10:700);
-            %             xlim([0, 700])
-            %             title('quality')
-        end
+       %% visualize statistics
+        f_out = visualizeStat(obj)
         %% set population object
         function set.pop(obj, N)
             if isnumeric(N)  && isscalar(N)
@@ -259,8 +190,8 @@ classdef readDataVect < dynamicprops % < handle
             end
         end
        %% filtering
-       filter(obj, field, fh, varargin)
-        %%
+       filterFields(obj, field, fh, varargin)
+        %% filter one field
         function filterField(obj, fieldName, inds)
             if ~isempty(obj.(fieldName))
                 obj.(fieldName) = obj.(fieldName)(inds);
@@ -290,7 +221,7 @@ classdef readDataVect < dynamicprops % < handle
             end
             subobj.M = sum(inds);
         end
-        %% Np: number of individuals + 1
+        %% set Np: number of individuals + 1
         function Np = get.Np(obj)
             Np = size(obj.E, 2);
             if ~(Np == obj.pop.Np)
@@ -303,7 +234,7 @@ classdef readDataVect < dynamicprops % < handle
             end
         end
         
-        %% operations on chromosomes
+        %% normalization over the chromosomes
         function normalizeChromosomes(obj)
             obj.cPtot = calcMarginal( [obj.cPstat(:), obj.cPsel(:)], 2 );
             %             obj.cPostTot = calcMarginal( [obj.cPstat, obj.cPosterior], 2 );
@@ -339,7 +270,7 @@ classdef readDataVect < dynamicprops % < handle
             varargout{1} = obj.z;
         end
         
-        [obj, varargout] = run(obj, varargin)
+        [obj, varargout] = runHMM(obj, varargin)
         
         function includeRnaPresence(obj)
             obj.xPrior(~obj.xRnaPresence) = -Inf;
@@ -357,9 +288,7 @@ classdef readDataVect < dynamicprops % < handle
                 else
                     obj.cSta(chr) = obj.Mtot+1;
                     obj.cEnd(chr) = obj.Mtot+1;
-                end
-                % [0, obj.cEnd(1:end-1)] + 1; 
-                % cumsum(obj.M);                
+                end                
                 obj.cNormConst = zeros(obj.chrNumber, 1);
             end
         end
@@ -395,18 +324,7 @@ classdef readDataVect < dynamicprops % < handle
                 x_cM = interp1(obj.chrMap(chr).nt, obj.chrMap(chr).cM, double(obj.x(obj.ci{chr})),'pchip','extrap');
             end
         end
-        
-        function dx_cM = recdistances(obj, chr)
-            % interpolates distances between the data points based on the
-            % supplied genetic map
-            if isscalar(obj.chrMap(chr))
-                dx_cM =  obj.chrMap(chr) * abs(diff(obj.x(obj.ci{chr})));
-            else
-                x_cM = interp1(obj.chrMap(chr).nt, obj.chrMap(chr).cM, double(obj.x(obj.ci{chr})),'pchip','extrap');
-                dx_cM = abs(diff(x_cM));
-            end
-        end
-        
+                
         %% plotting
         varargout = plotChromosomes(obj, fields, varargin);
         
@@ -414,6 +332,7 @@ classdef readDataVect < dynamicprops % < handle
         
         plotSnpRatio(obj, KERNEL, varargin)
         
+        %% plot likelihood and posterior
         function plotStems(obj, fields, varargin)
             
              if nargin>2 && isscalar(varargin{1}) && isnumeric(varargin{1})
@@ -436,44 +355,11 @@ classdef readDataVect < dynamicprops % < handle
         
         %% plot stems for Likeilihood and Posterior
         plotStemsLP(obj, varargin)
-    
-        function plotScatterMW(obj, varargin)
-            if ~obj.flagWT
-                return
-            end
-            if nargin>1 && isscalar(varargin{1}) && isnumeric(varargin{1})
-                chr0 = varargin{1};
-                inds = obj.chromosome == chr0 ;
-            else
-                inds = true(size(obj.x));
-            end
-            figure('name', 'mt vs wt SNP ratio');
-            da(1) = scatter(obj.f(inds), obj.fw(inds), 'b.');
-            
-            hold on
-
-            da(2) =  scatter(obj.fmMedianF(inds ), obj.fwMedianF(inds ), 4, [0.7,.3, .3], 'o');
-            da(3) =  scatter(obj.fmMeanF(inds ), obj.fwMeanF(inds ), 4, [0.2,.8, .2], 'o');
-            daInfo = {'raw [all]', 'median', 'mean'};
-            
-            dl(1) = plot([0,1], [0,1], 'm--');
-            dl(2) = plot([0,.5], [0.5, 0], 'r-');
-            dlInfo = {'m = w (errors)', 'm + w = 1/2 (expected)'};
-            
-            deInfo = {};
-            if ~isempty(obj.snpEcotypesInfo)
-                de(1) =  scatter(obj.f(inds & obj.snpEcotypesInfo), obj.fw(inds & obj.snpEcotypesInfo), 'g.');
-                deInfo = 'BG ecotype';                
-                uistack(da(2:3), 'top')
-                uistack(dl, 'top')
-            end
-            
-            axis equal
-            xlabel('f_{mt}'); ylabel('f_{wt}')
-            xlim([0,1]); ylim([0,1])
-            legend([da, dl, de], {daInfo{:}, dlInfo{:}, deInfo}, 'location', 'northwest')
-        end
         
+        %% scatter plot mutant vs wild type pool statistics
+        f_out = plotScatterMW(obj, varargin);
+        
+        %% clear all the plots and delete them from the object register
         function clearPlots(obj)
             for ii = 1:numel(obj.prevFig);
                 try
@@ -494,7 +380,7 @@ classdef readDataVect < dynamicprops % < handle
         printTopHits(obj, filename, varargin) ;
         
         function filterF(obj, KERNEL, varargin)
-            % addpath(fullfile(USERFNCT_PATH, 'fastmedfilt1d'));
+            %% requires `fastmedfilt1d` module !
             obj.fmMedianF = zeros(size(obj.f));
             obj.fmMeanF = zeros(size(obj.f));
             if ~isempty(obj.fw)
@@ -518,19 +404,19 @@ classdef readDataVect < dynamicprops % < handle
                         obj.fwMeanF(obj.chromosome == chr) = smooth(obj.qw(obj.chromosome == chr), KERNEL)./smooth(obj.rw(obj.chromosome == chr), KERNEL);
                     end
                 end
-            end            
+            end
         end
-        %% Baum-Welch
+        %% Baum-Welch : depricated
         obj =  AR.runBaumWelch(obj, chr);
         %%
         obj = set_cMaxX(obj, filePath);
-        function [cc, xIndOnChr] = findChrByIndex(obj, ind)
-            assert( all(ind <= obj.Mtot), 'index/ces out of bound!')
-            cInds = bsxfun(@le, obj.cSta(:)', ind(:)) & bsxfun(@le, ind(:), obj.cEnd(:)');
-            assert( all(sum(cInds,2) == 1), 'ambigous mapping!')
-            dict = double(1:obj.chrNumber)';
-            cc = double(cInds)*dict;
-            xIndOnChr = ind - obj.cSta(cc)' + 1;
-        end
+%         function [cc, xIndOnChr] = findChrByIndex(obj, ind)
+%             assert( all(ind <= obj.Mtot), 'index/ces out of bound!')
+%             cInds = bsxfun(@le, obj.cSta(:)', ind(:)) & bsxfun(@le, ind(:), obj.cEnd(:)');
+%             assert( all(sum(cInds,2) == 1), 'ambigous mapping!')
+%             dict = double(1:obj.chrNumber)';
+%             cc = double(cInds)*dict;
+%             xIndOnChr = ind - obj.cSta(cc)' + 1;
+%         end
     end
 end

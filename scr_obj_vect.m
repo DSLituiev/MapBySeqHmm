@@ -2,7 +2,6 @@ close all; clear all; clc;
 dbclear if warning
 tic
 
-
 % DATA_PATH = '/media/Processing/seq/data';
 DATA_PATH = './raw_data';
 USERFNCT_PATH = './dependencies';
@@ -27,8 +26,7 @@ disp(['=======  Processing data from the run ''', dataID, ''' ======='])
 
 %= and genetic distance in cM between them)
 
-%=       load the recombination map (contains positions of the markers
-%= and genetic distance in cM between them)
+
 
 %= construct the path to the (primary experimental) data file
 dataPath = fullfile(DATA_PATH, [dataID, '.csv'] );
@@ -51,7 +49,7 @@ myhist(50, AR.f, 'r')
 hold all
 myhist(50, AR.f(AR.f>0.05), 'g')
 
-AR.filter('q', @(x)(x>7)); % mutant reads
+AR.filterFields('q', @(x)(x>7)); % mutant reads
 
 AR.calcDxMin;
 f = AR.visualizeStat;
@@ -61,13 +59,13 @@ exportfig(gcf, fullfile('figures', dataID,'qualityCtrl'), 'format','eps', 'color
 % visualizeAnnotationStat(annotation)
 
 
-AR.filter('r', @(x)(x<quantile(AR.r, 0.98))); % mutant reads
-AR.filter('q', @(x)(x>7)); % mutant reads
+AR.filterFields('r', @(x)(x<quantile(AR.r, 0.98))); % mutant reads
+AR.filterFields('q', @(x)(x>7)); % mutant reads
 
-% AR = AR.filter('f', @(x)(x<1)); % SNP ratio
-AR.filter('f', @(x)(x<.8)); % SNP ratio
+% AR = AR.filterFields('f', @(x)(x<1)); % SNP ratio
+AR.filterFields('f', @(x)(x<.8)); % SNP ratio
 
-% AR = AR.filter('dx', @(x)(x>120)); % SNP ratio
+% AR = AR.filterFields('dx', @(x)(x>120)); % SNP ratio
 mixtObj = AR.unmix('plot');
 f = plotReadSpacingPDF(AR, mixtObj, 'all');
 clear mixtObj
@@ -76,7 +74,7 @@ AR.filterDx();
 AR.plotChromosomes('dx', 'yscale', 'log', 'figure', 'new', 'plotfun', @(x,y)plot(x,y, 'rx'));
 AR.plotChromosomes('dxFiltered', 'yscale', 'log', 'figure', 'old', 'plotfun', @(x,y)plot(x,y, 'm-'));
 
-% AR = AR.filter('dxFiltered', @(x)(x>70491)); % SNP ratio
+% AR = AR.filterFields('dxFiltered', @(x)(x>70491)); % SNP ratio
 %% SNP ratio
 
 AR.clearPlots;
@@ -90,10 +88,9 @@ fig(gcf, 'width', 24)
 % fig(gcf, 'width', 24)
 exportfig(gcf, fullfile('figures', dataID, sprintf('SNP_Ratio_k%u', KERNEL)), 'format','eps', 'color', 'rgb')
 
-%% linkage map
-load('./reference/ChrMap.mat')
-AR.chrMap = ChrMap;
-clear ChrMap;
+%% load the linkage map
+mapPath = './reference/ChrMap.mat';
+AR.setLinkageMap(mapPath)
 
 %% general experimental constants:
 AR.pop = N;
@@ -117,25 +114,15 @@ lambda1 = 1;
 AR.emissionHandle = @(q, r, study)emissionMixBetaBinomial(q, r, AR.pop, theta, lambda1);
 % AR.emissionHandle = @(q, r, study)emissionMixBetaBinomial(q, r, AR.pop.N, theta, gi1(1:AR.Mtot));
 
-%  emissionHandle = @(q, r, study)emissionBetaBinomial(q, r, study, theta);
+%  AR.emissionHandle = @(q, r, study)emissionBetaBinomial(q, r, study, theta);
 % AR.emissionHandle = @(qq, rr, ff)emissionk0(qq, rr, AR.pop);
-% AR.contrib = ones(size(AR.x));
 
 % AR.Alpha = 1./(0:0.01:1);
 AR.Alpha =  linkageLoosening;
-% AR.contrib = 0.5*ones(numel(AR.x),1);
 
 AR.plotChromosomes('contrib', 'yscale', 'lin', 'norm', true, 'figure', 'new', 'plotfun', @(x,y)plot(x,y, 'r^', 'markersize', 6, 'linewidth', 2));
-% AR.runBaumWelch(); %%%% DEPRICATED
-% AR.plotChromosomes('contrib', 'yscale', 'lin', 'norm', true, 'figure', 'old', 'plotfun', @(x,y)plot(x,y, 'bv', 'markersize', 6, 'linewidth', 2));
 
-%
-% load( 'emission_fun.mat')
-%  AR.E = E;
-%  AR.contrib = contrib;
-%  AR.contrib = 1;really
-AR.calcEmission;
-AR.run();
+AR.runHMM();
 
 % AR.xPsel = calcMarginal(AR.xkPflat(:,floor(end/2):end),2);
 
@@ -152,7 +139,6 @@ exportfig(gcf, fullfile('figures', dataID, 'zMLE'), 'format','eps', 'color', 'rg
 if exist('chr0', 'var')
     AR.plotChromosome2D(chr0);
 end
-
 
 % AR.calcLogOdds;
 AR.plotChromosomes('xLogOdds', 'yscale', 'lin', 'figure', 'new', 'yThr', 0);

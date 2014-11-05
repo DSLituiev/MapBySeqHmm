@@ -163,7 +163,7 @@ classdef hmm_cont < handle
                 error('runFBinternal:allEntriesAreNaN', 'all entries in the probability vector are NaN!')
             end
         end
-        %% Apply the assumption about the model and return the results
+        %% Apply a provided assumption about the model and return the results
         function [xPout, xkPout] = getLikelihoodOfAModel(obj, model_P_z)
             if isempty(obj.xkPplain)
                 obj.runFBinternal;

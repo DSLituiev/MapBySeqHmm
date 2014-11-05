@@ -1,5 +1,10 @@
-function [obj, varargout] = run(obj, varargin)
-% RUN
+function [obj, varargout] = runHMM(obj, varargin)
+% RUNHMM  --  creates `hmm_cont` objects for each chromosome and runs them
+% to calculate likelihoods P[ model_m | x_ ]
+% the obtained likelihood values are passed into arrays of the parent object
+%
+% ## INPUT (optional)
+% chromosomes to process
 
 obj.lastWarn = lastwarn;
 p = inputParser;
@@ -13,18 +18,25 @@ if isempty(obj.Alpha)
     obj.Alpha = 1;
     fprintf('setting Alpha to 1\n')
 end
-
+%%
+if isempty(obj.E) || ~all(size(obj.E) == [ obj.Mtot, obj.Np ])
+    obj.calcEmission
+else
+    fprintf('keeping the emission matrix from a previous run...\n')
+end
+%% which chromosome(s) to process?
 if  p.Results.chr>0
     chrV = p.Results.chr;
 else
     chrV = 1:obj.chrNumber;
 end
 
+%% initialize empty vectors for output probabilities
 obj.cPstat = zeros(obj.chrNumber,1);
 obj.cPsel = zeros(obj.chrNumber,1);
 obj.cNormConst = zeros(obj.chrNumber,1);
-        
-%% P[z] models
+
+%% set the P[z] models
 kPstat = obj.pop.Pstat;
 kPflat = ones(1, obj.Np)./obj.Np;
 kPsel = zeros(1, obj.Np);
@@ -33,12 +45,13 @@ if obj.selType
 else
     kPsel(1) = 1;
 end
-%%
+%% loop through the chromosomes
 for chr = chrV
     ticInit = tic;
     fprintf('processing the chromosome\t%u\t...', chr)
     msgLength = 0;
-        
+    
+    %% initialize the `hmm_cont` model for this chromosome
     obj.HMM{chr} = hmm_cont(obj.pop, obj.E(obj.cSta(chr):obj.cEnd(chr), :));
     
     for linkageLooseningCurrent = obj.Alpha
@@ -46,14 +59,14 @@ for chr = chrV
             continue
         end
         obj.setTransitionMatrix(chr)
-        %% flat
-        [xPflat, xkPflat] = obj.HMM{chr}.getLikelihoodOfAModel( kPflat );                
-        %% static
+        %% 'flat' model
+        [xPflat, xkPflat] = obj.HMM{chr}.getLikelihoodOfAModel( kPflat );
+        %% static model
         [xPstat, ~] = obj.HMM{chr}.getLikelihoodOfAModel( kPstat);
-        %% selected        
+        %% selection model
         [xPsel, ~] = obj.HMM{chr}.getLikelihoodOfAModel( kPsel );
         xPsel(isnan(obj.xPsel)) = -Inf; %%%%%%%%%
-        %% assign to the outer object fields
+        %% pass to the outer object fields
         obj.xkPflat(obj.ci{chr},:) = xkPflat;
         obj.xPflat(obj.ci{chr}) = xPflat;
         obj.xPstat(obj.ci{chr}) = xPstat;
@@ -64,7 +77,6 @@ for chr = chrV
         obj.cNormConst(chr) = - ( obj.pop.Np + calcMarginal(xPflat) ) ;
         obj.xLogOdds(obj.ci{chr}) =  xPsel - xPstat;
         
-         
         if ~isempty(obj.xPrior) &&  numel(obj.xPrior) == numel(obj.xPsel)
             obj.xPosterior(obj.ci{chr},1) = obj.xPsel(chr) + obj.xPrior(obj.ci{chr});
             obj.cPosterior(chr) = calcMarginal(obj.xPosterior(obj.ci{chr}));
@@ -73,28 +85,12 @@ for chr = chrV
         end
         
         if strcmpi('plot', p.Results.plFlag)
-            varargout{1} = figure;
-            subplot(2,1,1)
-            plot(obj.x(obj.ci{chr}), obj.xPstat(obj.ci{chr}), 'g-')
-            hold all
-            plot(obj.x(obj.ci{chr}), obj.xPout(obj.ci{chr}), 'r-')
-            plot(obj.x(obj.ci{chr}), obj.xPflat(obj.ci{chr}), 'b-')
-            legend({'stationary', 'selection', 'flat'})
-            
-            subplot(2,1,2)
-            plot(obj.x(obj.ci{chr}), obj.xPstat(obj.ci{chr})  + obj.cNormConst(chr) , 'g-')
-            hold all
-            plot(obj.x(obj.ci{chr}), obj.xPsel(obj.ci{chr}) + obj.cNormConst(chr) , 'r-')
-            legend({'stationary norm',  'selection norm'})
-            
+            f_out = plotProbabilitiesOnAChromosome(obj, chr);
+            varargout{1} = f_out;
         elseif nargout>1
             varargout{1} = [];
         end
-        obj.T{chr} = [];
-        obj.A{chr} = [];
-        obj.logAlpha{chr} = [];
-        obj.logBeta{chr} = [];
-        
+        %% log printing block:
         if strcmp(obj.lastWarn, lastwarn)
             obj.lastWarn = '';
         elseif ~isempty(lastwarn)
@@ -111,7 +107,6 @@ for chr = chrV
         fprintf(textA)
         msgLength = numel(textA);
     end
-    
     
     fprintf(repmat('\b',1, msgLength));
     fprintf('\b\b\b took\t%4.2f\t s \t SNPs:\t%u \n',  toc(ticInit), obj.M(chr) )

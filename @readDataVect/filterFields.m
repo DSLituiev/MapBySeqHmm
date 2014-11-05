@@ -1,4 +1,4 @@
-function filter(obj, field, fh, varargin)
+function filterFields(obj, field, fh, varargin)
 %FILTER Summary of this function goes here
 %   Detailed explanation goes here
 %% filtering

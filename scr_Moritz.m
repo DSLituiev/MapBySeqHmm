@@ -134,7 +134,7 @@ AR.Alpha = ALPHA;
 %  AR.contrib = contrib;
 %  AR.contrib = 1;really
 AR.calcEmission;
-AR.run();
+AR.runHMM();
 
 figure; plot(AR.xPsel)
 
