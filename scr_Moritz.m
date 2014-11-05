@@ -60,7 +60,7 @@ AR = AR.filter('dx', @(x)(x<1e4)); %
 
 
 AR.calcDxMin;
-AR.visStat;
+AR.visualizeStat;
 fig(gcf, 'width', 24)
 exportfig(gcf, fullfile('figures', dataID,'qualityCtrl'), 'format','eps', 'color', 'rgb')
 

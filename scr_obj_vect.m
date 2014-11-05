@@ -46,7 +46,6 @@ AR.set_cMaxX('TAIR10-chr-counts.dat');
 % [AR.xPrior, AR.maxHitGene, AR.maxHitEffect,...
 %     AR.positionCDS, AR.effectAA, AR.effectCodone] = constructPriorStr(annotation);
 
-
 figure
 myhist(50, AR.f, 'r')
 hold all
@@ -55,8 +54,8 @@ myhist(50, AR.f(AR.f>0.05), 'g')
 AR.filter('q', @(x)(x>7)); % mutant reads
 
 AR.calcDxMin;
-AR.visStat;
-fig(gcf, 'width', 24)
+f = AR.visualizeStat;
+fig(f, 'width', 24)
 exportfig(gcf, fullfile('figures', dataID,'qualityCtrl'), 'format','eps', 'color', 'rgb')
 
 % visualizeAnnotationStat(annotation)
@@ -127,8 +126,8 @@ AR.Alpha =  linkageLoosening;
 % AR.contrib = 0.5*ones(numel(AR.x),1);
 
 AR.plotChromosomes('contrib', 'yscale', 'lin', 'norm', true, 'figure', 'new', 'plotfun', @(x,y)plot(x,y, 'r^', 'markersize', 6, 'linewidth', 2));
-AR.runBaumWelch();
-AR.plotChromosomes('contrib', 'yscale', 'lin', 'norm', true, 'figure', 'old', 'plotfun', @(x,y)plot(x,y, 'bv', 'markersize', 6, 'linewidth', 2));
+% AR.runBaumWelch(); %%%% DEPRICATED
+% AR.plotChromosomes('contrib', 'yscale', 'lin', 'norm', true, 'figure', 'old', 'plotfun', @(x,y)plot(x,y, 'bv', 'markersize', 6, 'linewidth', 2));
 
 %
 % load( 'emission_fun.mat')

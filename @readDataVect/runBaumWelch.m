@@ -1,7 +1,6 @@
 function obj = runBaumWelch(obj, varargin)
-% maxIter = 100;
-% chr = 1;
 
+warning('runBW:info', 'Depricated!')
 warning('runBW:info', [' TO DO : the SNPs are selected mostly based on the distribution,', ...
     ' not much for their linkage'])
 %% check the input parameters
@@ -13,35 +12,39 @@ addOptional(p,'verbose', '', @(x)(ischar(x)|isempty(x)) );
 %
 addParamValue(p,     'errTol',           1e-6, @isscalar);
 addParamValue(p,     'maxIter',           10, @isscalar);
-
+addParamValue(p,     'theta',           1e-2, @isscalar);
+addParamValue(p,     'lambda0',           0.9, @isscalar);
 
 parse(p, obj, varargin{:});
 %% check pre-calculated matrices
-
 if any(isnan(obj.contrib))
     warning('runBW:NaN_contrib', 'NaNs in the contributions');
     obj.contrib(isnan(obj.contrib)) = 1;
 end
 %% initial values:
-% Pzm = obj.pop.Pstat;
+READ_LENGTH = 250;
 % options = optimset('TolFun', p.Results.errTol.*obj.pop.Np, 'FunValCheck', 'on', 'display', 'off'); % set TolX
-
 dLambda = NaN(p.Results.maxIter+1, 1);
 
-
+% Pzm = obj.pop.Pstat;
 Pzm = 10.^logBetaBinomialThetaMu0(obj.pop.kvect(:), obj.pop.N, 2/3, 2e-1)';
 % binopdf(obj.pop.kvect, obj.pop.N, 0.33);
 Pzm = Pzm./sum(Pzm);
-figure('name', 'the initial distribution assumed for demixing')
-plot(obj.pop.kvect, Pzm);
+if ~isempty(p.Results.verbose) && (p.Results.verbose(1) == 'v')
+    figure('name', 'the initial distribution assumed for demixing')
+    plot(obj.pop.kvect, Pzm);
+end
 
-% ./obj.pop.Np;
-lambda0 = 0.8 ;
-THETA = 1e-2;
+lambda0 = p.Results.lambda0;
 % obj.contrib(:) = lambda0 + 0.2*(rand(obj.Mtot, 1) - 0.5);
 chrV = p.Results.chr;
 if ~chrV
     chrV = 1:obj.chrNumber;
+end
+
+modelName = 'HMMy';
+if ~isprop(obj, modelName)
+    P = addprop(obj, modelName);
 end
 
 for cc = chrV
@@ -50,15 +53,19 @@ for cc = chrV
     Px_zm_y1 = zeros(obj.M(cc), obj.pop.Np);
     Px_zm_y0 = zeros(obj.M(cc), obj.pop.Np);
     
-    obj.setTransitionMatrix( cc );
+    %% a HMM object for `z`
+    obj.setTransitionMatrix( cc ); 
+    %% a HMM object for `y`
+    t =  obj.x(obj.ci{cc}) / READ_LENGTH;
+    obj.(modelName){cc} = hmm_cont(obj.pop, [], t);
     %%
-    
-    % dLambda(1) = 1;
     lambda0EstLog = -Inf(obj.M(cc), 1);
     lambda1EstLog = -Inf(obj.M(cc), 1);
     
     for ii = 1 : p.Results.maxIter
-        [mE1, mE0] = mixBetaBinomUniform(double(obj.q(obj.ci{cc})), double(obj.r(obj.ci{cc})),  obj.pop.N, THETA);
+        [mE1, mE0] = mixBetaBinomUniform(double(obj.q(obj.ci{cc})), double(obj.r(obj.ci{cc})), ...
+            obj.pop.N, p.Results.theta);
+        
         mE0 = repmat(mE0, [1, obj.pop.Np]);
 
         %% P [x_m | z_m, lambda_m]
@@ -79,18 +86,31 @@ for cc = chrV
         Px_zm_y0 = rawFB + log10(mE0) ;
         notNan = ~any(isnan(rawFB),2);
         
-        logQ_zm = bsxfun(@times,  lambdaOld(notNan) , Px_zm_y1(notNan, :)) + ...
-            bsxfun( @times, ( 1 - lambdaOld(notNan) ) , Px_zm_y0(notNan, :));        
+        % size(logLikelihood) = [ m * k * j ]  
+        % [data points]:        m = 1...M
+        % [state space of `z`]: k = 0:N
+        % [state space of `y`]: j = {0,1}
+        logLikelihood = cat(3, Px_zm_y0, Px_zm_y1);
+        
+        % Q[z] ~  p[z] * \exp( \sum_y Q[y] * \log p[x_| z_m, y_m] )
+        % Q[z] ~  p[z] * \exp( \sum_y Q[y] * logLikelihood )
+        % logQ[z] =  \log p[z] + \sum_y ( Q[y] * logLikelihood ) + const
+        Qy_m = cat(3, 1 - lambdaOld, lambdaOld);
+        
+        crossEntropy_y = sum(bsxfun(@times, Qy_m, logLikelihood), 3);
+
+        logQ_zm = bsxfun(@plus,   log10(Pzm), crossEntropy_y );
         logQ_zm = bsxfun(@minus, logQ_zm, calcMarginal(logQ_zm, 2));
-        Q_zm = 10.^logQ_zm;
-        Q_zm = bsxfun( @rdivide, Q_zm, sum(Q_zm, 2));
+        
+        Qz_m = 10.^logQ_zm;
+        Qz_m = bsxfun( @rdivide, Qz_m, sum(Qz_m, 2));
         
         %     figure; plot(obj.x(obj.ci{chr}), calcMarginal(Px_zm_y1(obj.ci{chr},  :) - Px_zm_y0(obj.ci{chr}, :), 2), 'x' )
         
         %% Q[y]
         % Ty = ones(2,2)./2;
-        lambda1EstLog(notNan) =   log10(lambda0)     + sum(Q_zm(notNan, 2:end) .*  Px_zm_y1(notNan, 2:end), 2)   ;
-        lambda0EstLog(notNan) =   log10(1 - lambda0) + sum(Q_zm(notNan, 2:end) .*  Px_zm_y0(notNan, 2:end), 2)   ;
+        lambda1EstLog(notNan) =   log10(lambda0)     + sum(Qz_m(notNan, 2:end) .*  Px_zm_y1(notNan, 2:end), 2)   ;
+        lambda0EstLog(notNan) =   log10(1 - lambda0) + sum(Qz_m(notNan, 2:end) .*  Px_zm_y0(notNan, 2:end), 2)   ;
         lambdaNew = 10.^(lambda1EstLog - calcMarginal([lambda0EstLog, lambda1EstLog],2));
         lambdaNew(isnan(lambdaNew)) = 0.5;
              
@@ -98,7 +118,6 @@ for cc = chrV
         %     figure; plot(lambdaEst);
         
         dLambda(ii) = norm(lambdaOld - lambdaNew)./numel(lambdaNew);
-        
         
         if any(isnan(lambdaNew))
             warning('runBW:NaN_contrib', 'NaNs in the contributions. Replacing with 0.5');
@@ -112,7 +131,7 @@ for cc = chrV
         %
         %       calcMarginal(Pzm( :, 2:end),2)
         
-        if dLambda(ii) < 1e-6 || all(isnan(Q_zm(:))) || ii == p.Results.maxIter
+        if dLambda(ii) < 1e-6 || all(isnan(Qz_m(:))) || ii == p.Results.maxIter
             fprintf('chromosome:\t%u\t# iterations:\t%u\tchange:\t%e \n', cc, ii, dLambda(ii) )
             break
         end
@@ -125,7 +144,7 @@ end
 
 if p.Results.chr~=0
     figure('name', 'Q[z_m]')
-    surf(obj.x(obj.ci{cc}), obj.pop.kvect, Q_zm', 'linestyle', 'none'); view( 0 , 90 )
+    surf(obj.x(obj.ci{cc}), obj.pop.kvect, Qz_m', 'linestyle', 'none'); view( 0 , 90 )
     
     figure('name', 'b-b')
     surf(obj.x(obj.ci{cc}), obj.pop.kvect, Px_zm_y1', 'linestyle', 'none'); view( 0 , 90 )

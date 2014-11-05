@@ -1,7 +1,15 @@
 classdef hmm_cont < handle
-    %HMM_CONT Summary of this class goes here
-    %   Detailed explanation goes here
-    
+%HMM_CONT -- a class for handling of continous space/time Markov chains
+%   
+% Inputs:
+% =======
+% `pop` --  a `population` object, 
+%             describing the hidden state space
+% `t`   -- time/space coordinate 
+%             (without differencing)
+% `E`   -- emission matrix
+%
+
     properties
         t
         Pz
@@ -14,14 +22,13 @@ classdef hmm_cont < handle
         logAlpha
         logBeta
         pop
-        xkPout
-        xPout
         xkPplain
         xPplain
         selType = true; % 'true' for positive selection, 'false' for negative.
     end
     
     methods
+        %% initialization / construction
         function obj = hmm_cont(population_obj, emission_matrix, dist_genetic)
             obj.pop = population_obj;
             
@@ -48,10 +55,8 @@ classdef hmm_cont < handle
                 obj.t = [];
             end
         end
-        %% emission
-        % obj = calcEmission(obj);
-        %% transition
         
+        %% transition
         function obj = calcT(obj, varargin)
             if nargin>1
                 obj.linkageLoosening = varargin{1};
@@ -143,17 +148,13 @@ classdef hmm_cont < handle
                 scaleB(m) = - max(obj.logBeta(m, :));
             end
         end
-        %% FB - final step
+        %% Forward-Backward with no assumption about the model
         function runFBinternal(obj)
             if isempty(obj.logAlpha ) || isempty(obj.logAlpha )
                 obj.cumMatr();
             end
             
             obj.xkPplain = obj.logAlpha + obj.logBeta;
-            % obj.xkPout = bsxfun(@plus, nansum([obj.logAlpha , obj.logBeta ],2), log10(obj.Pz));
-            %             infInds = isinf(obj.logAlpha ) & isinf(obj.logBeta );
-            %             figure; p= pcolor(obj.logBeta); set(p, 'linestyle','none')
-            %             obj.xkPout
             obj.xPplain = calcMarginal(obj.xkPplain, 2);
             if any(isnan(obj.xPplain ))
                 warning('runFBinternal:someEntriesAreNaN', 'some entries in the probability vector are NaN!')
@@ -162,7 +163,7 @@ classdef hmm_cont < handle
                 error('runFBinternal:allEntriesAreNaN', 'all entries in the probability vector are NaN!')
             end
         end
-        
+        %% Apply the assumption about the model and return the results
         function [xPout, xkPout] = getLikelihoodOfAModel(obj, model_P_z)
             if isempty(obj.xkPplain)
                 obj.runFBinternal;
@@ -170,24 +171,6 @@ classdef hmm_cont < handle
             xkPout = bsxfun(@plus, obj.xkPplain, log10(model_P_z(:)'));
             xPout = calcMarginal(xkPout, 2);
         end
-        %% forward-backward wrapping functions
-        function obj = runFB(obj, Pin)
-            if nargin<2
-                obj.Pz = ones(1, obj.Np);
-            else
-                obj.Pz = Pin;
-            end
-            obj = runFBinternal(obj);
-        end
-
-        
-        function PFF = getPoutFullFlat(obj)
-            if isempty(obj.xkPplain)
-                obj = runFBflat(obj);
-            end
-            PFF = obj.xkPout;
-        end                
     end
-    
 end
 

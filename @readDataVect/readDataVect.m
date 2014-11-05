@@ -1,4 +1,4 @@
-classdef readDataVect < handle
+classdef readDataVect < dynamicprops % < handle
     properties
         chromosome
         x
@@ -148,16 +148,16 @@ classdef readDataVect < handle
             end
         end
         %% visualize statistics
-        function visStat(obj)
-            nBins = max( floor(numel(obj.dx)/25), 7 );
+        function f_out = visualizeStat(obj)
+            nBins = max( floor(numel(obj.x)/25), 7 );
             %==
             df = 0.01*ceil(100/nBins);
             fx = df/2:df:(1-df/2);
             %==
-            dr = max(1/nBins, 0.01);
-            rx = df/2:dr:(log10(max(obj.r))-dr/2);
+            dr = 0.05;
+            rx = 0:dr:(log10(max(obj.r))-dr/2);
             %==
-            figure
+            f_out = figure('name', 'descriptive statistics');
             
             subplot(2,2,1)
             myhist100(fx,  obj.f, 'r', 'edgecolor', 'none');
@@ -366,14 +366,23 @@ classdef readDataVect < handle
         %% emission
         obj = calcEmission(obj);
         %% transition
-        function setTransitionMatrix(obj, chr)
+        function setTransitionMatrix(obj, chr, varargin)
             t =  0.01 * mapPhysicalToGeneticPositionCentiMorgan(obj, chr);
-            if iscell(obj.HMM) && numel(obj.HMM)>=chr && isobject(obj.HMM{chr}) 
-                obj.HMM{chr}.t = t;
-            else % initialise it
-                 obj.HMM{chr} = hmm_cont(obj.pop, [], t);
+            
+            if nargin>2 && ischar(varargin{1})
+                modelName = varargin{1};
+            else
+                modelName = 'HMM';
             end
-            obj.HMM{chr}.calcT();
+            if ~isprop(obj, 'HMM')
+                P = addprop(obj, modelName);
+            end
+            if iscell(obj.(modelName) ) && numel(obj.(modelName) )>=chr && isobject(obj.(modelName){chr}) 
+                 obj.(modelName){chr}.t = t;
+            else % initialise it
+                 obj.(modelName){chr} = hmm_cont(obj.pop, [], t);
+            end
+            obj.(modelName){chr}.calcT();
         end
         
         function x_cM = mapPhysicalToGeneticPositionCentiMorgan(obj, chr)
