@@ -45,6 +45,8 @@ if obj.selType
 else
     kPsel(1) = 1;
 end
+
+log10N_LinkLoosening = log10(numel(obj.Alpha));
 %% loop through the chromosomes
 for chr = chrV
     ticInit = tic;
@@ -53,37 +55,24 @@ for chr = chrV
     
     %% initialize the `hmm_cont` model for this chromosome
     obj.HMM{chr} = hmm_cont(obj.pop, obj.E(obj.cSta(chr):obj.cEnd(chr), :));
+    xPflat = zeros( obj.M(chr), numel(obj.Alpha) );
+    xPstat = zeros( obj.M(chr), numel(obj.Alpha) );
+    xPsel  = zeros( obj.M(chr), numel(obj.Alpha) );
+    xkPflat  = zeros( obj.M(chr), obj.Np, numel(obj.Alpha) );
     
-    for linkageLooseningCurrent = obj.Alpha
+    for ii = 1:numel(obj.Alpha)
         if numel(obj.x(obj.chromosome==chr))<2
             continue
         end
-        obj.setTransitionMatrix(chr)
+        obj.setTransitionMatrix(chr, obj.Alpha(ii))
         %% 'flat' model
-        [xPflat, xkPflat] = obj.HMM{chr}.getLikelihoodOfAModel( kPflat );
+        [xPflat(:, ii) , xkPflat(:, :, ii)] = obj.HMM{chr}.getLikelihoodOfAModel( kPflat );
         %% static model
-        [xPstat, ~] = obj.HMM{chr}.getLikelihoodOfAModel( kPstat);
+        [xPstat(:, ii), ~] = obj.HMM{chr}.getLikelihoodOfAModel( kPstat);
         %% selection model
-        [xPsel, ~] = obj.HMM{chr}.getLikelihoodOfAModel( kPsel );
-        xPsel(isnan(obj.xPsel)) = -Inf; %%%%%%%%%
-        %% pass to the outer object fields
-        obj.xkPflat(obj.ci{chr},:) = xkPflat;
-        obj.xPflat(obj.ci{chr}) = xPflat;
-        obj.xPstat(obj.ci{chr}) = xPstat;
-        obj.xPsel(obj.ci{chr}) = xPsel;
-        %% normalize
-        obj.cPstat(chr) = calcMarginal(obj.xPstat(obj.ci{chr}));
-        obj.cPsel(chr)  = calcMarginal(obj.xPsel( obj.ci{chr}));
-        obj.cNormConst(chr) = - ( obj.pop.Np + calcMarginal(xPflat) ) ;
-        obj.xLogOdds(obj.ci{chr}) =  xPsel - xPstat;
-        
-        if ~isempty(obj.xPrior) &&  numel(obj.xPrior) == numel(obj.xPsel)
-            obj.xPosterior(obj.ci{chr},1) = obj.xPsel(chr) + obj.xPrior(obj.ci{chr});
-            obj.cPosterior(chr) = calcMarginal(obj.xPosterior(obj.ci{chr}));
-        else
-            warning('readDataVect:run:noPrior', 'Prior is not defined!\n')
-        end
-        
+        [xPsel(:, ii), ~] = obj.HMM{chr}.getLikelihoodOfAModel( kPsel );
+        xPsel(isnan(xPsel(:, ii)), ii) = -Inf; %%%%%%%%%
+        %% plot
         if strcmpi('plot', p.Results.plFlag)
             f_out = plotProbabilitiesOnAChromosome(obj, chr);
             varargout{1} = f_out;
@@ -97,17 +86,36 @@ for chr = chrV
             obj.lastWarn = lastwarn;
         end
         
-        if isempty(obj.lastWarn) || strcmp(obj.lastWarn, 'Directory already exists.')
+        if isempty(obj.lastWarn) || ...
+                strcmp(obj.lastWarn, 'Directory already exists.') || ...
+                strcmp(obj.lastWarn(1:8), 'T matrix')
             fprintf(repmat('\b',1, msgLength));
         else
             fprintf('\n')
         end
         
-        textA = sprintf('Alpha =\t%4.2f\t...', linkageLooseningCurrent);
+        textA = sprintf('Alpha =\t%4.2f\t...', obj.Alpha(ii));
         fprintf(textA)
         msgLength = numel(textA);
     end
-    
+        %% pass to the outer object fields
+        obj.xkPflat(obj.ci{chr},:) = calcMarginal(xkPflat, 3) - log10N_LinkLoosening;
+        obj.xPflat(obj.ci{chr},1) =  calcMarginal(xPflat, 2) - log10N_LinkLoosening;
+        obj.xPstat(obj.ci{chr},1) =  calcMarginal(xPstat, 2) - log10N_LinkLoosening;
+        obj.xPsel(obj.ci{chr},1)  =  calcMarginal(xPsel,  2) - log10N_LinkLoosening;
+        %% normalize
+        obj.cPstat(chr) = calcMarginal(obj.xPstat(obj.ci{chr}));
+        obj.cPsel(chr)  = calcMarginal(obj.xPsel( obj.ci{chr}));
+        obj.cNormConst(chr) = - ( obj.pop.Np + calcMarginal(obj.xPflat(obj.ci{chr})) ) ;
+        obj.xLogOdds(obj.ci{chr}) =  obj.xPsel(obj.ci{chr}) - obj.xPstat(obj.ci{chr});
+        
+        if ~isempty(obj.xPrior) &&  numel(obj.xPrior) == numel(obj.xPsel)
+            obj.xPosterior(obj.ci{chr},1) = obj.xPsel(obj.ci{chr}) + obj.xPrior(obj.ci{chr});
+            obj.cPosterior(chr) = calcMarginal(obj.xPosterior(obj.ci{chr}));
+        else
+            warning('readDataVect:run:noPrior', 'Prior is not defined!\n')
+        end
+        
     fprintf(repmat('\b',1, msgLength));
     fprintf('\b\b\b took\t%4.2f\t s \t SNPs:\t%u \n',  toc(ticInit), obj.M(chr) )
 end % chr

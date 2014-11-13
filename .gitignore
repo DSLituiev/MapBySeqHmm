@@ -17,4 +17,6 @@ figures.tar.gz
 **/*.mexa64
 **/*.png
 **/*.jp*g
+**/*.eps
+
 

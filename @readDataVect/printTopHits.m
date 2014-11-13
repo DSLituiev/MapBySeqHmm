@@ -10,13 +10,14 @@ addOptional(p,'rankField', 'xPosteriorNorm', @(x)isprop(obj, x)  );
 %
 addParamValue(p, 'cutoffValue',           [],  @(x)(isnumeric(x) & (isscalar(x)|isempty(x)))  )
 addParamValue(p, 'cutoffField', 'xPselNorm', @(x)isprop(obj, x) );
+addParamValue(p, 'so', '../reference/SO_terms.csv', @(x)ischar(x) );
 
 parse(p, obj, filename, varargin{:});
 
 numPerChr = p.Results.numPerChr;
 rankField = p.Results.rankField;
 %%
-soDict = soDictionary();
+soDict = soDictionary( p.Results.so);
 
 if ~isempty(p.Results.cutoffValue)
     hitInds = (p.Results.cutoffValue < obj.(rankField) );

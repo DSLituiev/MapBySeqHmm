@@ -8,7 +8,7 @@ classdef soDictionary
             if nargin>0
                 soFilePath = varargin{1};
             else
-                soFilePath = './reference/SO_terms.csv';
+                soFilePath = '../reference/SO_terms.csv';
             end
             fid = fopen(soFilePath);
             terms = textscan(fid, '%s %s %s %s %s %s', 'delimiter', ';', 'HeaderLines', 0);

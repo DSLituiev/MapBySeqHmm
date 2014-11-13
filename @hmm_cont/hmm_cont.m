@@ -30,7 +30,11 @@ classdef hmm_cont < handle
     methods
         %% initialization / construction
         function obj = hmm_cont(population_obj, emission_matrix, dist_genetic)
-            obj.pop = population_obj;
+            if isobject(population_obj)
+                obj.pop = population_obj;
+            elseif isscalar(population_obj)
+                obj.pop = population(population_obj);
+            end
             
             if nargin<2
                 return

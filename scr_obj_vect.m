@@ -5,6 +5,8 @@ tic
 % DATA_PATH = '/media/Processing/seq/data';
 DATA_PATH = './raw_data';
 USERFNCT_PATH = './dependencies';
+FIGURES_PATH = './figures';
+REF_PATH = './reference';
 addpath(genpath(USERFNCT_PATH));
 savepath;
 addpath('./utilites');
@@ -18,8 +20,8 @@ addpath('./emission');
 %= + number of individuals in the mapping population (N)
 dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
 
-linkageLoosening = 1;
-% AR.Alpha = 1./(0:0.01:1);
+linkageLoosening =  1;
+% linkageLoosening = 1./(0:0.01:1);
 
 %%
 disp(['=======  Processing data from the run ''', dataID, ''' ======='])
@@ -31,15 +33,14 @@ disp(['=======  Processing data from the run ''', dataID, ''' ======='])
 %= construct the path to the (primary experimental) data file
 dataPath = fullfile(DATA_PATH, [dataID, '.csv'] );
 %= extract the refenece reads if the reference ID is given:
-
-dataID = sprintf(strcat(dataID, '_%u'), linkageLoosening);
-mkdir(fullfile('figures',dataID))
-copyfile('./ResultsInfo.txt', fullfile('figures',dataID, 'README.txt'))
+dataID = constructOutName( dataID, linkageLoosening );
+mkdir(fullfile(FIGURES_PATH, dataID))
+copyfile('./ResultsInfo.txt', fullfile(FIGURES_PATH, dataID, 'README.txt'))
 
 % [AR, ~] = readSequencingDataCsv(dataPath, 'noannotation');
 
 [AR, annotation] = subtractBackGroundGenotype(dataPath);
-AR.set_cMaxX('TAIR10-chr-counts.dat');
+AR.set_cMaxX( fullfile(REF_PATH ,'TAIR10-chr-counts.dat') );
 
 % [AR.xPrior, AR.maxHitGene, AR.maxHitEffect,...
 %     AR.positionCDS, AR.effectAA, AR.effectCodone] = constructPriorStr(annotation);
@@ -49,12 +50,13 @@ myhist(50, AR.f, 'r')
 hold all
 myhist(50, AR.f(AR.f>0.05), 'g')
 
+
 AR.filterFields('q', @(x)(x>7)); % mutant reads
 
 AR.calcDxMin;
 f = AR.visualizeStat;
 fig(f, 'width', 24)
-exportfig(gcf, fullfile('figures', dataID,'qualityCtrl'), 'format','eps', 'color', 'rgb')
+exportfig(gcf, fullfile(FIGURES_PATH, dataID,'qualityCtrl'), 'format','eps', 'color', 'rgb')
 
 % visualizeAnnotationStat(annotation)
 
@@ -86,10 +88,10 @@ fig(gcf, 'width', 24)
 % KERNEL = 81;
 % AR.plotSnpRatio(KERNEL)
 % fig(gcf, 'width', 24)
-exportfig(gcf, fullfile('figures', dataID, sprintf('SNP_Ratio_k%u', KERNEL)), 'format','eps', 'color', 'rgb')
+exportfig(gcf, fullfile(FIGURES_PATH, dataID, sprintf('SNP_Ratio_k%u', KERNEL)), 'format','eps', 'color', 'rgb')
 
 %% load the linkage map
-mapPath = './reference/ChrMap.mat';
+mapPath = fullfile(REF_PATH ,'ChrMap.mat');
 AR.setLinkageMap(mapPath)
 
 %% general experimental constants:
@@ -134,7 +136,7 @@ AR.plotChromosomes('xPstat', 'yscale', 'lin', 'norm', true);
 
 z = AR.calcMleZ('plot');
 fig(gcf, 'width', 24)
-exportfig(gcf, fullfile('figures', dataID, 'zMLE'), 'format','eps', 'color', 'rgb')
+exportfig(gcf, fullfile(FIGURES_PATH, dataID, 'zMLE'), 'format','eps', 'color', 'rgb')
 
 if exist('chr0', 'var')
     AR.plotChromosome2D(chr0);
@@ -144,7 +146,7 @@ end
 AR.plotChromosomes('xLogOdds', 'yscale', 'lin', 'figure', 'new', 'yThr', 0);
 
 fig(gcf, 'width', 24)
-exportfig(gcf, fullfile('figures', dataID,'LogLiOdds'), 'format','eps', 'color', 'rgb')
+exportfig(gcf, fullfile(FIGURES_PATH, dataID,'LogLiOdds'), 'format','eps', 'color', 'rgb')
 %%
 AR.plotStemsLP( 'ylim', [-20,0])
 if exist('chr0', 'var')
@@ -153,7 +155,7 @@ if exist('chr0', 'var')
         @(x,y)plot(x,y, 'r^', 'markersize', 6, 'linewidth', 2), 'select', ind, 'ylim', [-20,0]);
 end
 fig(gcf, 'width', 24)
-exportfig(gcf, fullfile('figures', dataID, 'LH-Posterior'), 'format','eps', 'color', 'rgb')
+exportfig(gcf, fullfile(FIGURES_PATH, dataID, 'LH-Posterior'), 'format','eps', 'color', 'rgb')
 
 %%
 AR.plotChromosomes('xPselNorm', 'yscale', 'lin', 'figure', 'new', 'yThr', 0);
@@ -164,7 +166,10 @@ AR.plotChromosomes('xPosteriorNorm', 'yscale',  'lin','figure', 'old', 'yThr', 0
 %% print
 numberOfHits = 2e6;
 [~,dataName,ext] = fileparts(dataID);
-AR.printTopHits(fullfile('figures', dataID, [dataName,ext, '-out.csv']), numberOfHits, 'xLogOdds', 'cutoffValue', -Inf)
+outListName = [dataName,ext, '-out.csv'];
+outListPath = fullfile(FIGURES_PATH, dataID, outListName);
+SO_DICT_PATH = fullfile(REF_PATH , 'SO_terms.csv');
+AR.printTopHits(outListPath, numberOfHits, 'xLogOdds', 'cutoffValue', -Inf, 'so', SO_DICT_PATH)
 %%
 if exist('chr0', 'var')
     figure('name', 'dx and membership')

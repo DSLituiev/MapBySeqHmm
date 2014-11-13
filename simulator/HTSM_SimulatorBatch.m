@@ -18,7 +18,7 @@ par.Nplants = 50;
 % par.SNPperPlant = 10;
 par.r_expected = 12;
 par.FalsePositives = 1;
-par.cSNPpos = .5;
+par.xCausativeSNP = .5;
 par.Selection = true;
 par.Rec_max = 10; %<= maximal number of recombinations per one path
 par.T_max = 1; %<= maximal length of the path

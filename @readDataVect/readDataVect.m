@@ -298,8 +298,14 @@ classdef readDataVect < dynamicprops % < handle
         function setTransitionMatrix(obj, chr, varargin)
             t =  0.01 * mapPhysicalToGeneticPositionCentiMorgan(obj, chr);
             
-            if nargin>2 && ischar(varargin{1})
-                modelName = varargin{1};
+            if nargin>3 && isscalar(varargin{1})
+                linkageLoosening = varargin{1};
+            else
+                linkageLoosening = 1;
+            end
+                 
+            if nargin>3 && ischar(varargin{2})
+                modelName = varargin{2};
             else
                 modelName = 'HMM';
             end
@@ -311,7 +317,7 @@ classdef readDataVect < dynamicprops % < handle
             else % initialise it
                  obj.(modelName){chr} = hmm_cont(obj.pop, [], t);
             end
-            obj.(modelName){chr}.calcT();
+            obj.(modelName){chr}.calcT(linkageLoosening);
         end
         
         function x_cM = mapPhysicalToGeneticPositionCentiMorgan(obj, chr)
