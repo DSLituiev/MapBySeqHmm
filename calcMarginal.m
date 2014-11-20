@@ -25,6 +25,11 @@ else
     dim = 1;
 end
 
+if size(logP, dim) == 1
+    sumLogP = logP;
+    return
+end
+    
 if all( abs( max(logP, [], dim) - min(logP, [], dim) ) < acceptableRange )
     maxLogP = max(logP, [], dim);
     scaledLogP = bsxfun(@minus, logP, maxLogP);

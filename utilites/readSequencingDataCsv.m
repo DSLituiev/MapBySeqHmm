@@ -30,19 +30,21 @@ flagSkipTextChromosomes = true;
 header = textscan(fid, repmat('%s ',[1, 20]), 1, 'delimiter', ';');
 fclose(fid);
 
-if strcmpi( 'wt_altCount', header)
+if any(strcmpi( 'wt_altCount', [header{:}] ))
     flagWT = true;
 else
     flagWT = false;
 end
 
-indEcotype = strcmpi(header, 'snpEcotypesInfo');
-flagEcotype = any(indEcotype);
+ind_snpEcotypesInfo = strcmpi([header{:}], 'snpEcotypesInfo');
+ind_snpFrequencyInEcotypes = strcmpi([header{:}], 'snpFrequencyInEcotypes');
+flagEcotype = any(ind_snpEcotypesInfo);
 
 dataPattern = cell(20,1);
 dataPattern(1:20) = {'%s'};
 dataPattern(3) = {'%f'}; % quality
 dataPattern([2,7,11:15]) = {'%u'};
+
 
 % dataPattern(19) = {'%f'};
 % dataPattern([20]) = {'%u8'};
@@ -51,15 +53,20 @@ if flagWT && ~isempty(header{16}{:}) % 17, 18
     dataPattern([2,7,11:18]) = {'%u'};
 end
 
-indRepeatType = strcmpi('repeatType', header);
+if flagEcotype
+    dataPattern{ind_snpEcotypesInfo} = '%u';
+    dataPattern{ind_snpFrequencyInEcotypes} = '%u';
+end
+
+indRepeatType = strcmpi('repeatType', [header{:}]);
 flagRepeats = any(indRepeatType);
 if flagRepeats
     dataPattern{indRepeatType} = '%s';
-    dataPattern{strcmpi('repeatName', header)} = '%s';
+    dataPattern{strcmpi('repeatName', [header{:}])} = '%s';
 end
 
 fid = fopen(dataPath);
-data = textscan(fid, strjoin(dataPattern, ' '), 'delimiter', ';', 'HeaderLines', 1);
+data = textscan(fid, strjoin(dataPattern', ' '), 'delimiter', ';', 'HeaderLines', 1);
 fclose(fid);
 
 fprintf('data file has been read\n')
@@ -113,7 +120,7 @@ end
 if flagEcotype
     % Reads.xPrior(~logical(data{19})) = -Inf;
     Reads.snpFrequencyInEcotypes = double(data{19});
-    Reads.snpEcotypesInfo = logical(data{indEcotype}>0);
+    Reads.snpEcotypesInfo = data{ind_snpEcotypesInfo};
 end
 
 Reads.geneID = data{6};
@@ -126,6 +133,7 @@ if flagWT
     Reads.flagWT = true;
     Reads.rw = double(data{16});
     Reads.qw = double(data{18});
+    Reads.fw = Reads.qw./Reads.rw;
 end
 
 fprintf('%u reads extracted\n', Reads.Mtot)

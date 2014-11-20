@@ -10,14 +10,14 @@ addOptional(p,'rankField', 'xPosteriorNorm', @(x)isprop(obj, x)  );
 %
 addParamValue(p, 'cutoffValue',           [],  @(x)(isnumeric(x) & (isscalar(x)|isempty(x)))  )
 addParamValue(p, 'cutoffField', 'xPselNorm', @(x)isprop(obj, x) );
-addParamValue(p, 'so', '../reference/SO_terms.csv', @(x)ischar(x) );
+addParamValue(p, 'so', './reference/SO_terms.csv', @(x)ischar(x) );
 
 parse(p, obj, filename, varargin{:});
 
 numPerChr = p.Results.numPerChr;
 rankField = p.Results.rankField;
 %%
-soDict = soDictionary( p.Results.so);
+soDict = soDictionary( p.Results.so );
 
 if ~isempty(p.Results.cutoffValue)
     hitInds = (p.Results.cutoffValue < obj.(rankField) );
@@ -41,6 +41,9 @@ xHitRanking = uint32(tiedrank(- obj.(rankField)(hitInds) ));
 
 xRanks = zeros(size(hitInds), 'double');
 xRanks(hitInds) = xHitRanking;
+
+fprintf('printing results to: \n%s\n', filename)
+
 fID = fopen(filename , 'wt' );
 if fID == -1
     error('printTopHits:wrongFileID','the file cannot be created')
@@ -57,7 +60,9 @@ if ~isempty(obj.xRnaPrior)
     fprintf( fID, 'Array Prior / mean:%1.4f;', nanmean(obj.xArrayPrior));
     fprintf( fID, 'RNA Prior / mean:%1.4f;', nanmean(obj.xRnaPrior));
 end
-
+if ~isempty(obj.snpEcotypesInfo)
+    fprintf( fID, 'snpEcotypeInfo;');
+end
 
 fprintf(fID, '\n');
 
@@ -88,6 +93,9 @@ for  cc = 1:obj.chrNumber% :-1:1
         if ~isempty(obj.xRnaPrior)
             fprintf( fID, '%g;', obj.xArrayPrior(jj) );
             fprintf( fID, '%g;', obj.xRnaPrior(jj) );
+        end
+        if ~isempty(obj.snpEcotypesInfo)
+            fprintf( fID, '%u;', obj.snpEcotypesInfo(jj));
         end
         fprintf(fID, '\n');
     end
