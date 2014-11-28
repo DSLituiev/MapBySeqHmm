@@ -109,6 +109,7 @@ classdef hmm_cont < handle
             
             obj.A =  bsxfun(@times, ...
                 permute( obj.E(1:end-1, :), [2, 3, 1] ), obj.T ) ;
+            assert( ~ any( squeeze(all(all(isnan(obj.A),2),1)) ))
         end
         %% cumulative matrices 'logAlpha' and 'logBeta'
         function obj = cumMatr(obj)
@@ -120,11 +121,10 @@ classdef hmm_cont < handle
                 warning('cumMatrSafe:emptyNp', 'define T first!')
                 return
             end
-            
-            obj.logAlpha = -inf(obj.M, obj.Np);
-            obj.logBeta  = -inf(obj.M, obj.Np);
-            
+           
             %% forward
+            obj.logAlpha = -inf(obj.M, obj.Np);
+            
             Ac = obj.E( end, :)';
             obj.logAlpha(obj.M, 1: obj.Np) = log10(Ac');
             
@@ -139,6 +139,8 @@ classdef hmm_cont < handle
             end
             
             %% backward
+            obj.logBeta  = -inf(obj.M, obj.Np);
+            
             Bc = ones(1, obj.Np);
             obj.logBeta(1, 1: obj.Np) = 0;
             
@@ -174,6 +176,26 @@ classdef hmm_cont < handle
             end
             xkPout = bsxfun(@plus, obj.xkPplain, log10(model_P_z(:)'));
             xPout = calcMarginal(xkPout, 2);
+        end
+        function Pz = getHiddenStateModel(obj, mo)
+            if strcmpi(mo(1:3), 'sta')
+                Pz = obj.pop.Pstat;
+                return
+            end
+            if strcmpi(mo(1:3), 'sel')
+                Pz = zeros(obj.pop.Np,1);
+                Pz(end) = 1;
+                return
+            end
+            if strcmpi(mo(1:3), 'neg') % negative selection
+                Pz = zeros(obj.pop.Np,1);
+                Pz(1) = 1;
+                return
+            end
+             if strcmpi(mo(1:3), 'fla') % flat
+                Pz = ones(obj.pop.Np,1)./obj.pop.Np;
+                return
+            end
         end
     end
 end

@@ -26,7 +26,7 @@ fprintf('chromosome length:\t%g\n', par.T_max)
 %% simulate sequencing
 [tSampling, q, r, fAtSamplingPoints] = sequencePath(par);
 %% plot hidden data and sampling/sequencing
-f = plotSeqSim( par );
+f = plotSeqSim( par ); return
 %% Forward-backward
 tic
 [xLogOdds, xkPout] = par.runHMM();

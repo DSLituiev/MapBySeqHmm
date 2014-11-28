@@ -15,6 +15,7 @@ hold on
 plot(obj.t, obj.k_t, 'rs-','markersize',8,'MarkerFaceColor','r')
 plot(obj.t, 2*obj.pop.N * obj.q./obj.r, 'go','markersize',8,'MarkerFaceColor','g')
 xlim([0, obj.T_max])
+plot([0, max(obj.t)],  obj.pop.N*[1,1], 'k-')
 ylim([0, 10*round(.15 * obj.pop.N)])
 xlabel('linkage, morgans')
 legend({'k: chromosome chunks'; 'k: SNP genotyping'; 'f: mutant read frequency x 2\itN'})

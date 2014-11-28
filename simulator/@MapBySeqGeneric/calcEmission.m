@@ -3,6 +3,10 @@ function obj = calcEmission(obj)
 %% initialize constants and compute Emission matrix and vectors
 %= note that E is only normalized to the c: 
 %=   c = sum(E, 1)
+if isempty(obj.emissionHandle)
+    warning('calcEmission:noEmissionFunctionSet','no emission function set. Using binomial.')
+    obj.emissionHandle = @(qq, rr, ff)emissionk0(qq, rr, obj.pop);
+end
 
 if obj.flagWT 
     mE = feval(obj.emissionHandle, double(obj.q), double(obj.r), obj.pop);

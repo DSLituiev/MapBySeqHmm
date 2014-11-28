@@ -2,6 +2,7 @@ function [E, c] = emissionk0(q, r, study)
 % emissionk returns emission probabilities
 % mins = [~, min_r, min_q]
 %% P[q|r,k]
+assert(numel(q) == numel(r), 'the number of elements in `q` and `r` differs!')
 M = numel(q);
 qq = double(repmat(q,[ 1, study.N+1]));
 rr = double(repmat(r,[ 1, study.N+1]));

@@ -16,7 +16,6 @@ classdef simPooledSeq < MapBySeqGeneric
         indCausativeSNP
         t0
         est_waiting_time
-        HMM
         maxLogOdds
         t0_predicted 
     end
@@ -36,13 +35,11 @@ classdef simPooledSeq < MapBySeqGeneric
                 obj.T_max = 1; %<= maximal length of the path
             end
             
-            obj.Rec_max = obj.T_max * 10; %<= maximal number of recombinations per one path
+            obj.Rec_max = obj.T_max * 20; %<= maximal number of recombinations per one path
         end
         
         [tChr, fChr, t0, dummy , T_max] = generatePath(obj);
-        [t,q,r, fAtSamplingPoints] = sequencePath(obj, varargin);
-        
-        
+        [t,q,r, fAtSamplingPoints] = sequencePath(obj, varargin);        
         [ f ] = plotSeqSim( obj );
         
         function [xLogOdds, xkPsel] = runHMM(obj)

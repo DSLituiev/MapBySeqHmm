@@ -10,6 +10,7 @@ end
     
 ax = axes('position', get(ax0, 'position'), 'ylim',  10.^get(ax0, 'ylim'),...
     'Color', 'none', 'xtick', [], 'yscale', 'log');
+set(ax, 'ytick', 10.^ get(ax0,'ytick') )
 set(ax0, 'ytick', [])
 
 end

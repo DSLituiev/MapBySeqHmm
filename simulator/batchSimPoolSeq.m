@@ -27,9 +27,20 @@ classdef batchSimPoolSeq < simPooledSeq
             obj.numRepeatIter = numRepeatIter;
             
             for nn = obj.numRepeatIter:-1:1
-                [obj.xnLogOdds(:,nn), obj.xnPsel(:,nn), obj.xnPstat(:,nn), obj.xn_k(:,nn), obj.n_t0_predicted(nn), obj.n_t(:,nn)] = ...
-                    runSilently(obj, mode);                
-                msgLength = updateLog( msgLength, nn );
+                try
+                    [obj.xnLogOdds(:,nn), obj.xnPsel(:,nn), obj.xnPstat(:,nn), obj.xn_k(:,nn), obj.n_t0_predicted(nn), obj.n_t(:,nn)] = ...
+                        runSilently(obj, mode);
+%                     if strcmpi(mode, 'grid') && ~ obj.Selection && rand(1,1)>0.5
+%                        obj.xnLogOdds(:,nn) = flipud(obj.xnLogOdds(:,nn));
+%                        obj.xnPsel(:,nn)    = flipud(obj.xnPsel(:,nn));
+%                        obj.xnPstat(:,nn)   = flipud(obj.xnPstat(:,nn));
+%                     end
+                    msgLength = updateLog( msgLength, nn );
+                catch % exception
+                    warning('skipping')
+                    nn = nn + 1;
+                end
+                
             end
             fprintf('\n')            
         end

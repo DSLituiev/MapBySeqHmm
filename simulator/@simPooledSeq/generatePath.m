@@ -7,7 +7,9 @@ function varargout = generatePath(obj)
 
 k_tau = 1; % propensity
 
-tmatr = 1/k_tau * cumsum( - log( rand(obj.Rec_max, obj.pop.N, 'single') ) );
+waiting_times =  - log( rand(obj.Rec_max, obj.pop.N, 'single') );
+% Gillespie, 1976; (eq. 27a)
+tmatr = 1/k_tau * cumsum( waiting_times ); 
 
 %== find the cutoff time (the time when the last recombination in any path occured)
 % [~, lastMinInd] = min(tmatr,[],2);
@@ -43,25 +45,30 @@ if obj.Selection %<= linked
     [~, indt0] = max(tmatr>obj.t0);   %<= abuse of the 'max' beheaviour
     % [-dx_v(indt0), 1-2*mod(indt0,2)']
     % mut_v = ( ones(1,obj.Nplants) - 2*mod(indt0,2) );
-    mut_v = ( -dx_v(indt0)' );
+    first_mut_v = ( -dx_v(indt0)' );
     %== include the false positives
-    mut_v( 1:(obj.FalsePositives) ) = - mut_v( 1:(obj.FalsePositives) );
-    cumdx = calcCumStateChange(dx_v, mut_v, tind);
+    first_mut_v( 1:(obj.FalsePositives) ) = - first_mut_v( 1:(obj.FalsePositives) );
+    cumdx = calcCumStateChange(dx_v, first_mut_v, tind);
     %== offset cumdx(indCausativeSNP)
     obj.kChr = obj.pop.N - obj.FalsePositives - cumdx(obj.indCausativeSNP) + cumdx;
 else   %<= stationary
     obj.indCausativeSNP = 1;
     obj.t0 = 0;   
     %== assign (almost each second plant) '-1'
-    Nmut = ceil(obj.pop.N./2);
-    % Nmut = random('binom',obj.Nplants, 0.5);
-    mut_v = ones(1, obj.pop.N);
-    mut_v(1, 1:Nmut ) = -1; %<= [1, -1, 1, -1, 1, -1...]
     
-    cumdx = calcCumStateChange(dx_v, mut_v, tind);
-    obj.kChr = obj.pop.N - Nmut + cumdx;
+    % Nmut = random('binom',obj.Nplants, 0.5);
+    rng('shuffle');
+    x_t0_v = (rand(1, obj.pop.N) > 0.5);
+    first_mut_v = 1 - 2*x_t0_v;
+    Nmut = sum(x_t0_v);
+    cumdx = calcCumStateChange(dx_v, first_mut_v, tind);
+    obj.kChr = Nmut + cumdx;
+    if rand(1, 1) > 0.5
+        obj.kChr = flipud(obj.kChr);
+    end
 end
 
+% figure; plot([obj.kChr, cumdx])
 % % %% approximate scaling
 % % tvect = tvect(tvect<T_max);
 % % x = x(tvect<T_max);
