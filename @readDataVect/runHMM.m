@@ -50,7 +50,12 @@ log10N_LinkLoosening = log10(numel(obj.Alpha));
 %% loop through the chromosomes
 for chr = chrV
     ticInit = tic;
+    if obj.cSta(chr)<obj.cEnd(chr) && size(obj.E,1)>=obj.cEnd(chr)
     fprintf('processing the chromosome\t%u\t...', chr)
+    else
+        fprintf('skipping the chromosome\t%u\t... \n', chr)
+        continue
+    end
     msgLength = 0;
     
     %% initialize the `hmm_cont` model for this chromosome

@@ -11,6 +11,8 @@ raw_data/
 
 figures.tar.gz
 
+fastmedfilt1d/fastmedfilt1d_core.mexa64
+
 **/*.asv
 **/*.mexw64
 **/*.mex???
@@ -18,5 +20,4 @@ figures.tar.gz
 **/*.png
 **/*.jp*g
 **/*.eps
-
 

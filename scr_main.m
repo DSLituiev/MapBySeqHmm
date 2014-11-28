@@ -53,7 +53,6 @@ AR.filterFields('q', @(x)(x>7)); % mutant reads
 AR.calcDxMin;
 f = AR.visualizeStat;
 fig(f, 'width', 24)
-<<<<<<< HEAD
 exportfig(gcf, fullfile(FIGURES_PATH, dataID,'qualityCtrl'), 'format', GRAPH_EXPORT_TYPE, 'color', 'rgb')
 
 % visualizeAnnotationStat(annotation)
@@ -129,7 +128,6 @@ end
 AR.plotChromosomes('xLogOdds', 'yscale', 'lin', 'figure', 'new', 'yThr', 0);
 
 fig(gcf, 'width', 24)
-<<<<<<< HEAD
 exportfig(gcf, fullfile(FIGURES_PATH, dataID,'LogLiOdds'), 'format', GRAPH_EXPORT_TYPE, 'color', 'rgb')
 
 %% plot likelihood and posterior

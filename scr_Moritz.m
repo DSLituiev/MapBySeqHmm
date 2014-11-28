@@ -25,10 +25,10 @@ addpath('./emission');
 %= number of plants:
 % dataID = '/MO/20140514.A-MO7-bwa-nm2-ems-annotation'; N = 181; chr0 = 1;
 
-% dataID = '/MO/20140514.A-MO7-bq20-ems-annotation-ecotypeInfo';  N = 181; chr0 = 1;
+dataID = '/MO/20140514.A-MO7-bq20-ems-annotation-ecotypeInfo';  N = 181; chr0 = 1;
 % dataID = '/MO/20140514.A-MO7-bq20-ems-annotation'; N = 181; chr0 = 1;
 
-dataID = '/MO/20140514.A-MO8-bq20-ems-annotation-ecotypeInfo'; N = 278; chr0 = 5;
+% dataID = '/MO/20140514.A-MO8-bq20-ems-annotation-ecotypeInfo'; N = 278; chr0 = 5;
 
 % dataID = '/MO/20140514.A-MO8-bq20-ems-annotation'; N = 278; chr0 = 5;
 % dataID = '20140514.A-MO7-bwa-rmdup-clipOverlap-q20-freebayes-ems-annotation-rna'; N = 181; chr0 = 1;
@@ -49,15 +49,14 @@ mkdir(fullfile('figures',dataID))
 
 clear AR 
 
-[AR] = readSequencingDataCsv2(dataPath);
+[AR] = readSequencingDataCsv(dataPath);
 %% apply filters and visualise statistics
-AR = AR.filter('q', @(x)(x>7)); % mutant reads
-AR = AR.filter('f', @(x)(x<.8)); % SNP ratio
+AR.filterFields('q', @(x)(x>7)); % mutant reads
+AR.filterFields('f', @(x)(x<.8)); % SNP ratio
 
 AR.calcDxMin;
-AR = AR.filter('dx', @(x)(x>10), 'chromosome', @(x)(x==chr0)); % 
-AR = AR.filter('dx', @(x)(x<1e4)); % 
-
+AR.filterFields('dx', @(x)(x>10), 'chromosome', @(x)(x==chr0)); % 
+AR.filterFields('dx', @(x)(x<1e4)); % 
 
 AR.calcDxMin;
 AR.visualizeStat;
@@ -98,7 +97,7 @@ AR.plotScatterMW()
 fig(gcf, 'width', 24)
 exportfig(gcf, fullfile('figures', dataID, 'SNP_Ratio_WT_vs_MT.eps'), 'format','eps', 'color', 'rgb')
 
-return
+% return
 %% set general experimental constants:
 AR.pop = N;
 %%
@@ -137,7 +136,6 @@ AR.calcEmission;
 AR.runHMM();
 
 figure; plot(AR.xPsel)
-
 
 AR.clearPlots;
 
@@ -210,7 +208,6 @@ exportfig(gcf, fullfile('figures', dataID, 'median filtered SNP Ratio'), 'format
 % AR.plotStems('xPosteriorNorm', 'figure', 'new');
 % AR.plotStems('xPselNorm', 'yThr', 0);
 numberOfHits = 2e6;
-
 
 [~,dataName,ext] = fileparts(dataID);
 AR.printTopHits(fullfile('figures', dataID, [dataName,ext, '-out.csv']), numberOfHits, 'xLogOdds', 'cutoffValue', 0)

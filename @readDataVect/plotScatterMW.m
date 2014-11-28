@@ -39,6 +39,9 @@ end
 axis equal
 xlabel('f_{mt}'); ylabel('f_{wt}')
 xlim([0,1]); ylim([0,1])
-legend([da, dl, de], {daInfo{:}, dlInfo{:}, deInfo}, 'location', 'northwest')
-
+if ~isempty(obj.snpEcotypesInfo)
+    legend([da, dl, de], {daInfo{:}, dlInfo{:}, deInfo}, 'location', 'northwest')
+else
+    legend([da, dl], {daInfo{:}, dlInfo{:}}, 'location', 'northwest')
+end
 end
