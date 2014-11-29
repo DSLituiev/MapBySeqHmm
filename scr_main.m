@@ -2,9 +2,9 @@ close all; clear all; clc;
 dbclear if warning
 tic
 
-GRAPH_EXPORT_TYPE = 'pdf'; % 'eps'
-% DATA_PATH = '/media/Processing/seq/data';
-DATA_PATH = './raw_data';
+GRAPH_EXPORT_TYPE = 'eps';
+DATA_PATH = '/media/Processing/seq/data';
+% DATA_PATH = './raw_data';
 USERFNCT_PATH = './dependencies';
 FIGURES_PATH = './figures';
 REF_PATH = './reference';
@@ -21,7 +21,7 @@ addpath('./emission');
 %= + number of individuals in the mapping population (N)
 dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
 
-linkageLoosening = 1; % 1./(0:0.01:1);
+linkageLoosening = 1; %[1./(0.02:0.01:1), 0.02:0.01:(1-0.01) ];
 
 %%
 disp(['=======  Processing data from the run ''', dataID, ''' ======='])
@@ -132,10 +132,11 @@ exportfig(gcf, fullfile(FIGURES_PATH, dataID,'LogLiOdds'), 'format', GRAPH_EXPOR
 
 %% plot likelihood and posterior
 AR.plotStemsLP( 'ylim', [-20,0])
+
 if exist('chr0', 'var')
     ind = (AR.x==x0 & AR.chromosome == chr0);    
     AR.plotChromosomes('xPselNorm', 'yscale', 'lin', 'figure', 'old', 'plotfun',...
-        @(x,y)plot(x,y, 'r^', 'markersize', 6, 'linewidth', 2), 'select', ind);
+        @(x,y)plot(x,y, 'r^', 'markersize', 12, 'linewidth', 2), 'select', ind);
 end
 fig(gcf, 'width', 24)
 exportfig(gcf, fullfile(FIGURES_PATH, dataID, 'LH-Posterior'), 'format',GRAPH_EXPORT_TYPE, 'color', 'rgb')

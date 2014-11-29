@@ -3,8 +3,8 @@ dbclear if warning
 tic
 
 GRAPH_EXPORT_TYPE = 'pdf'; % 'eps'
-% DATA_PATH = '/media/Processing/seq/data';
-DATA_PATH = './raw_data';
+DATA_PATH = '/media/Processing/seq/data';
+% DATA_PATH = './raw_data';
 USERFNCT_PATH = './dependencies';
 FIGURES_PATH = './figures';
 REF_PATH = './reference';
@@ -19,7 +19,10 @@ addpath('./emission');
 %= known positions of the causative SNP can be also provided here for
 %= further visualization
 %= + number of individuals in the mapping population (N)
-dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
+
+dataID = 'HL10/HL10-rmdup-clipOverlap-q20-bq20-ems-annotation';  chr0 =  3 ;  x0 =  16473265;N = 50;
+FIGURES_PATH = './figures/HL10_permutations';
+mkdir(FIGURES_PATH )
 
 linkageLoosening = 1; % 1./(0:0.01:1);
 
@@ -54,36 +57,41 @@ AR.setBetaBinomialEmission( theta, lambda1)
 %%
 nsp = nestedSeqPermutations(AR);
 
-n_iter = 1000;
-nests = 1;
-[xnPsel, xnLogOdds] = nsp.iterate( n_iter, nests);
-%%
-AR.runHMM('silent', true);
-%%
-FIGURES_PATH = './figures/HL7_permutations';
-% mkdir(FIGURES_PATH )
-for cc = 1:5
-    chr_inds = (nsp.chromosome == cc) ;
-    data_suffix = sprintf('-permutations_chr%u_iter%u_nests%u', cc, n_iter, nests);
+n_iter = 5000;
+ylim_log_odds = [-100 0];
+parpool(6)
+for nests = 2.^(4);
+    tic
+    [xnPsel, xnLogOdds] = nsp.iterate( n_iter, nests, 'parallel');
+    fprintf('%u sec\n', round(toc))
     %%
-    plotBatchProbT(nsp.x(chr_inds), xnPsel(chr_inds, 1:end-1), 'P[selection]', 'nolog', 'Mb');
-    hold on
-    plot(nsp.x(chr_inds)*1e-6, xnPsel(chr_inds, end), 'g-', 'linewidth', 2)
-    if cc == chr0
-        plot(x0*1e-6*[1,1], get(gca, 'ylim'), 'g--')
+    close all
+    for cc = 1:5
+        chr_inds = (nsp.chromosome == cc) ;
+        data_suffix = sprintf('-permutations_chr%u_iter%u_nests%u', cc, n_iter, nests);
+        %%
+        plotBatchProbT(nsp.x(chr_inds), xnPsel(chr_inds, 1:end-1), 'P[selection]', 'nolog', 'Mb');
+        hold on
+        plot(nsp.x(chr_inds)*1e-6, xnPsel(chr_inds, end), 'g-', 'linewidth', 2)
+        if cc == chr0
+            plot(x0*1e-6*[1,1], get(gca, 'ylim'), 'g--')
+        end
+        fig(gcf)
+        exportfig(gcf, fullfile(FIGURES_PATH, sprintf('p_sel%s', data_suffix)), 'format','eps', 'color', 'rgb')
+        %%
+        plotBatchProbT(nsp.x(chr_inds), xnLogOdds(chr_inds, 1:end-1), 'log Odds', 'nolog', 'Mb');
+        hold on
+        plot(nsp.x(chr_inds)*1e-6, xnLogOdds(chr_inds, end), 'g-', 'linewidth', 2)
+        set(gca, 'ylim', ylim_log_odds)
+        if cc == chr0
+            plot(x0*1e-6*[1,1], get(gca, 'ylim'), 'g--')
+        end
+        fig(gcf)
+        exportfig(gcf, fullfile(FIGURES_PATH, sprintf('log_odds%s', data_suffix)), 'format','eps', 'color', 'rgb')
     end
-    fig(gcf)
-    exportfig(gcf, fullfile(FIGURES_PATH, sprintf('p_sel%s', data_suffix)), 'format','eps', 'color', 'rgb')
-    %%
-    plotBatchProbT(nsp.x(chr_inds), xnLogOdds(chr_inds, 1:end-1), 'log Odds', 'nolog', 'Mb');
-    hold on
-    plot(nsp.x(chr_inds)*1e-6, xnLogOdds(chr_inds, end), 'g-', 'linewidth', 2)
-    if cc == chr0
-        plot(x0*1e-6*[1,1], get(gca, 'ylim'), 'g--')
-    end
-    fig(gcf)
-    exportfig(gcf, fullfile(FIGURES_PATH, sprintf('log_odds%s', data_suffix)), 'format','eps', 'color', 'rgb')
 end
+poolobj = gcp('nocreate');
+delete(poolobj);
 % % figure
 % hold on
 % plot(nsp.x(chr_inds), AR.xLogOdds(chr_inds), 'g-')

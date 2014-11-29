@@ -304,7 +304,7 @@ classdef readDataVect < dynamicprops % < handle
         function setTransitionMatrix(obj, chr, varargin)
             t =  0.01 * mapPhysicalToGeneticPositionCentiMorgan(obj, chr);
             
-            if nargin>3 && isscalar(varargin{1})
+            if nargin>=3 && isscalar(varargin{1})
                 linkageLoosening = varargin{1};
             else
                 linkageLoosening = 1;
