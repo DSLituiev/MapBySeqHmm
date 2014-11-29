@@ -11,6 +11,8 @@ p = inputParser;
 addRequired(p, 'obj', @isobject);
 addOptional(p, 'chr',  0,  @(x)(isscalar(x) && x<= obj.chrNumber));
 addOptional(p, 'plFlag',  '',  @ischar );
+addParamValue(p, 'silent',  false,  @islogical );
+addParamValue(p, 'keepTransitionMatrix',  false,  @islogical );
 %           addParamValue(p,     'exp10',             false, @isscalar);
 parse(p, obj, varargin{:});
 
@@ -20,7 +22,7 @@ if isempty(obj.Alpha)
 end
 %%
 if isempty(obj.E) || ~all(size(obj.E) == [ obj.Mtot, obj.Np ])
-    obj.calcEmission
+    obj.calcEmission;
 else
     fprintf('keeping the emission matrix from a previous run...\n')
 end
@@ -51,7 +53,9 @@ log10N_LinkLoosening = log10(numel(obj.Alpha));
 for chr = chrV
     ticInit = tic;
     if obj.cSta(chr)<obj.cEnd(chr) && size(obj.E,1)>=obj.cEnd(chr)
-    fprintf('processing the chromosome\t%u\t...', chr)
+        if ~p.Results.silent
+            fprintf('processing the chromosome\t%u\t...', chr)
+        end
     else
         fprintf('skipping the chromosome\t%u\t... \n', chr)
         continue
@@ -59,7 +63,14 @@ for chr = chrV
     msgLength = 0;
     
     %% initialize the `hmm_cont` model for this chromosome
-    obj.HMM{chr} = hmm_cont(obj.pop, obj.E(obj.cSta(chr):obj.cEnd(chr), :));
+    
+    if ~p.Results.keepTransitionMatrix || isempty(obj.HMM) || numel(obj.HMM)< chr || isempty(obj.HMM{chr}.T)
+        obj.HMM{chr} = hmm_cont(obj.pop, obj.E(obj.cSta(chr):obj.cEnd(chr), :));
+    else
+        obj.HMM{chr}.E = obj.E(obj.cSta(chr):obj.cEnd(chr), :);
+        obj.HMM{chr}.resetFlag = true;
+    end
+    
     xPflat = zeros( obj.M(chr), numel(obj.Alpha) );
     xPstat = zeros( obj.M(chr), numel(obj.Alpha) );
     xPsel  = zeros( obj.M(chr), numel(obj.Alpha) );
@@ -69,7 +80,9 @@ for chr = chrV
         if numel(obj.x(obj.chromosome==chr))<2
             continue
         end
-        obj.setTransitionMatrix(chr, obj.Alpha(ii))
+        if ~p.Results.keepTransitionMatrix || isempty(obj.HMM{chr}.T)
+            obj.setTransitionMatrix(chr, obj.Alpha(ii))
+        end
         %% 'flat' model
         [xPflat(:, ii) , xkPflat(:, :, ii)] = obj.HMM{chr}.getLikelihoodOfAModel( kPflat );
         %% static model
@@ -91,17 +104,20 @@ for chr = chrV
             obj.lastWarn = lastwarn;
         end
         
-        if isempty(obj.lastWarn) || ...
-                strcmp(obj.lastWarn, 'Directory already exists.') || ...
-                strcmp(obj.lastWarn(1:8), 'T matrix')
-            fprintf(repmat('\b',1, msgLength));
-        else
-            fprintf('\n')
+        if ~p.Results.silent
+            if isempty(obj.lastWarn) || ...
+                    strcmp(obj.lastWarn, 'Directory already exists.') || ...
+                    strcmp(obj.lastWarn(1:8), 'T matrix')
+                fprintf(repmat('\b',1, msgLength));
+            else
+                fprintf('\n')
+            end
         end
-        
-        textA = sprintf('Alpha =\t%4.2f\t...', obj.Alpha(ii));
-        fprintf(textA)
-        msgLength = numel(textA);
+        if ~p.Results.silent 
+            textA = sprintf('Alpha =\t%4.2f\t...', obj.Alpha(ii));
+            fprintf(textA)
+            msgLength = numel(textA);
+        end
     end
         %% pass to the outer object fields
         obj.xkPflat(obj.ci{chr},:) = calcMarginal(xkPflat, 3) - log10N_LinkLoosening;
@@ -121,7 +137,9 @@ for chr = chrV
             warning('readDataVect:run:noPrior', 'Prior is not defined!\n')
         end
         
-    fprintf(repmat('\b',1, msgLength));
-    fprintf('\b\b\b took\t%4.2f\t s \t SNPs:\t%u \n',  toc(ticInit), obj.M(chr) )
+     if ~p.Results.silent 
+        fprintf(repmat('\b',1, msgLength));
+        fprintf('\b\b\b took\t%4.2f\t s \t SNPs:\t%u \n',  toc(ticInit), obj.M(chr) )
+     end
 end % chr
 end

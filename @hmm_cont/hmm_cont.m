@@ -25,6 +25,7 @@ classdef hmm_cont < handle
         xkPplain
         xPplain
         selType = true; % 'true' for positive selection, 'false' for negative.
+        resetFlag = false;
     end
     
     methods
@@ -113,7 +114,7 @@ classdef hmm_cont < handle
         end
         %% cumulative matrices 'logAlpha' and 'logBeta'
         function obj = cumMatr(obj)
-            if isempty(obj.A)
+            if obj.resetFlag || isempty(obj.A)
                 obj.crossMatr();
             end
             
@@ -156,7 +157,7 @@ classdef hmm_cont < handle
         end
         %% Forward-Backward with no assumption about the model
         function runFBinternal(obj)
-            if isempty(obj.logAlpha ) || isempty(obj.logAlpha )
+            if obj.resetFlag || isempty(obj.logAlpha ) || isempty(obj.logBeta )
                 obj.cumMatr();
             end
             
@@ -171,7 +172,7 @@ classdef hmm_cont < handle
         end
         %% Apply a provided assumption about the model and return the results
         function [xPout, xkPout] = getLikelihoodOfAModel(obj, model_P_z)
-            if isempty(obj.xkPplain)
+            if obj.resetFlag || isempty(obj.xkPplain)
                 obj.runFBinternal;
             end
             xkPout = bsxfun(@plus, obj.xkPplain, log10(model_P_z(:)'));

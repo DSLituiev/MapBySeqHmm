@@ -133,7 +133,7 @@ function  varargout = plotChromosomes(obj, fieldName, varargin)
                 end
                     
                 tempYValues = yValues(~isinf(yValues));
-                maxY = nanmax([maxY; p.Results.yThr; tempYValues]);
+                maxY = nanmax([maxY; p.Results.yThr; tempYValues(:)]);
                 minY = nanmin([minY; p.Results.yThr; tempYValues(:)]);
                 
                 %                 spl(chr) = gca;

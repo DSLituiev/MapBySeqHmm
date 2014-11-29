@@ -146,7 +146,7 @@ classdef readDataVect < dynamicprops % < handle
             else
                 plotFl = '';
             end
-            [obj, mixtObj, mu] = unmixRepeats( obj, 'dx', plotFl,'modeNum', 2);
+            [obj, mixtObj, mu] = unmixRepeats( obj, 'dx', plotFl, 'modeNum', 2);
             
             fprintf('___________________________________\n' )
             fprintf('mixture modes\t log10(dx)\t dx\n' )
@@ -225,10 +225,10 @@ classdef readDataVect < dynamicprops % < handle
         function Np = get.Np(obj)
             Np = size(obj.E, 2);
             if ~(Np == obj.pop.Np)
-                obj.calcEmission;
+                % obj.calcEmission;
                 Np = size(obj.E, 2);
                 if ~(Np == obj.pop.Np)
-                    dbstop if warning
+                    % dbstop if warning
                     warning('readDataVect:wrongNp', 'the Np is wrong')
                 end
             end
@@ -294,6 +294,12 @@ classdef readDataVect < dynamicprops % < handle
         end
         %% emission
         obj = calcEmission(obj);
+        function setBetaBinomialEmission(obj, theta, lambda1)
+            assert(~isempty(obj.pop));
+            obj.emissionHandle = @(q, r, study)emissionMixBetaBinomial(q, r,...
+               obj.pop, theta, lambda1);
+        end
+            
         %% transition
         function setTransitionMatrix(obj, chr, varargin)
             t =  0.01 * mapPhysicalToGeneticPositionCentiMorgan(obj, chr);

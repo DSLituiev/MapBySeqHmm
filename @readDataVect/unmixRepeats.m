@@ -146,7 +146,7 @@ if strcmpi(p.Results.plotFlag, 'plot')
     plot( mixtObj.mu(:,1), median(log_r)*ones(size(mixtObj.mu(:,1))), 'kx', 'MarkerSize', 8, 'LineWidth', 2)
     [X, Y] = meshgrid(linspace(xLim(1), xLim(2), nPoints), linspace(yLim(1), yLim(2), nPoints) );
     
-    h = contour(X, Y, reshape(pdf(mixtObj, [X(:)]), [nPoints,nPoints]), cLevels );
+    h = contour(X, Y, reshape(pdf(mixtObj, X(:)), [nPoints,nPoints]), cLevels );
     %     h = ezcontour(@(x,y)pdf(distribObj, [x y]), [xLim, yLim]);
     if exist('h', 'var') && all(ishandle(h(:)))
         set(h, 'linewidth', 2);
@@ -218,13 +218,15 @@ if strcmpi(p.Results.plotFlag, 'plot')
     %     %     ylabel('count')
     %     ylabel('empirical CDF')
     
+end
     if nargout>2
         varargout = {mu, iTrue};
     end
-    if nargout>4
-        varargout = {f};
+    
+    if nargout>4 && strcmpi(p.Results.plotFlag, 'plot')
+        varargout{3} = f;
+    else
+        varargout{3} = [];
     end
-end
-
 
 end

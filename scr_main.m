@@ -3,8 +3,8 @@ dbclear if warning
 tic
 
 GRAPH_EXPORT_TYPE = 'pdf'; % 'eps'
-DATA_PATH = '/media/Processing/seq/data';
-% DATA_PATH = './raw_data';
+% DATA_PATH = '/media/Processing/seq/data';
+DATA_PATH = './raw_data';
 USERFNCT_PATH = './dependencies';
 FIGURES_PATH = './figures';
 REF_PATH = './reference';
