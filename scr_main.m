@@ -21,7 +21,7 @@ addpath('./emission');
 %= + number of individuals in the mapping population (N)
 dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
 
-linkageLoosening = 1; % 1./(0:0.01:1);
+linkageLoosening = 16; % 1./(0:0.01:1);
 
 %%
 disp(['=======  Processing data from the run ''', dataID, ''' ======='])
