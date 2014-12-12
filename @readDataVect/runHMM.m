@@ -133,7 +133,7 @@ for chr = chrV
         if ~isempty(obj.xPrior) &&  numel(obj.xPrior) == numel(obj.xPsel)
             obj.xPosterior(obj.ci{chr},1) = obj.xPsel(obj.ci{chr}) + obj.xPrior(obj.ci{chr});
             obj.cPosterior(chr) = calcMarginal(obj.xPosterior(obj.ci{chr}));
-        else
+        elseif ~p.Results.silent
             warning('readDataVect:run:noPrior', 'Prior is not defined!\n')
         end
         

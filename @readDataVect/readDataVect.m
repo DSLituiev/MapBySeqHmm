@@ -9,7 +9,7 @@ classdef readDataVect < dynamicprops % < handle
         rw
         fw
         fmMeanF
-        fwMeanF        
+        fwMeanF
         fmMedianF
         fwMedianF
         flagWT = false;
@@ -19,7 +19,7 @@ classdef readDataVect < dynamicprops % < handle
         contrib;
         c;
         E;
-        dx;        
+        dx;
         dxFiltered;
         emissionHandle;
         Alpha;
@@ -79,7 +79,7 @@ classdef readDataVect < dynamicprops % < handle
         xRnaPresence
         xRnaPrior
         xArrayPrior
-        snpFrequencyInEcotypes;        
+        snpFrequencyInEcotypes;
         snpEcotypesInfo;
         xTemp
     end
@@ -122,7 +122,7 @@ classdef readDataVect < dynamicprops % < handle
                 obj.(fieldOut)(cc) = feval(fhandle, obj.(fieldIn)(obj.chromosome == cc) );
             end
         end
-       %% visualize statistics
+        %% visualize statistics
         f_out = visualizeStat(obj)
         %% set population object
         function set.pop(obj, N)
@@ -162,7 +162,7 @@ classdef readDataVect < dynamicprops % < handle
         function obj = calcDxMin( obj )
             obj = calcDx(obj,  @(x)nanmin(x, [], 2));
         end
-
+        
         function obj = filterDx(obj, varargin )
             obj.dxFiltered = zeros(size(obj.dx));
             if nargin>2
@@ -171,12 +171,12 @@ classdef readDataVect < dynamicprops % < handle
                 chromosomes = 1:obj.chrNumber;
             end
             
-            for chr = chromosomes                
-%                 KERNEL = min(KERNEL, floor(numel(obj.dx(obj.chromosome == chr))/2) - 3 );
-%                 fprintf('chromosome %u, kernel size: %u\n', chr, KERNEL)
+            for chr = chromosomes
+                %                 KERNEL = min(KERNEL, floor(numel(obj.dx(obj.chromosome == chr))/2) - 3 );
+                %                 fprintf('chromosome %u, kernel size: %u\n', chr, KERNEL)
                 obj.dxFiltered(obj.chromosome == chr) = ...
                     smooth(obj.x(obj.chromosome == chr), obj.dx(obj.chromosome == chr), 'loess');
-            end          
+            end
         end
         
         function obj = calcDx( obj, fh )
@@ -189,8 +189,8 @@ classdef readDataVect < dynamicprops % < handle
                 obj.dx(inds,1) = feval( fh, dxPair);
             end
         end
-       %% filtering
-       filterFields(obj, field, fh, varargin)
+        %% filtering
+        filterFields(obj, field, fh, varargin)
         %% filter one field
         function filterField(obj, fieldName, inds)
             if ~isempty(obj.(fieldName))
@@ -281,14 +281,14 @@ classdef readDataVect < dynamicprops % < handle
             for chr = 1: obj.chrNumber
                 obj.ci{ chr } = (obj.chromosome == chr);
                 obj.M(chr) = sum(obj.ci{chr});
-                                
-                if obj.M(chr)>0; 
+                
+                if obj.M(chr)>0;
                     obj.cSta(chr) = find(obj.ci{ chr }, 1, 'first');
                     obj.cEnd(chr) = find(obj.ci{ chr }, 1, 'last');
                 else
                     obj.cSta(chr) = obj.Mtot+1;
                     obj.cEnd(chr) = obj.Mtot+1;
-                end                
+                end
                 obj.cNormConst = zeros(obj.chrNumber, 1);
             end
         end
@@ -297,19 +297,19 @@ classdef readDataVect < dynamicprops % < handle
         function setBetaBinomialEmission(obj, theta, lambda1)
             assert(~isempty(obj.pop));
             obj.emissionHandle = @(q, r, study)emissionMixBetaBinomial(q, r,...
-               obj.pop, theta, lambda1);
+                obj.pop, theta, lambda1);
         end
-            
+        
         %% transition
         function setTransitionMatrix(obj, chr, varargin)
             t =  0.01 * mapPhysicalToGeneticPositionCentiMorgan(obj, chr);
             
-            if nargin>3 && isscalar(varargin{1})
+            if nargin>=3 && isscalar(varargin{1})
                 linkageLoosening = varargin{1};
             else
                 linkageLoosening = 1;
             end
-                 
+            
             if nargin>3 && ischar(varargin{2})
                 modelName = varargin{2};
             else
@@ -318,10 +318,10 @@ classdef readDataVect < dynamicprops % < handle
             if ~isprop(obj, 'HMM')
                 P = addprop(obj, modelName);
             end
-            if iscell(obj.(modelName) ) && numel(obj.(modelName) )>=chr && isobject(obj.(modelName){chr}) 
-                 obj.(modelName){chr}.t = t;
+            if iscell(obj.(modelName) ) && numel(obj.(modelName) )>=chr && isobject(obj.(modelName){chr})
+                obj.(modelName){chr}.t = t;
             else % initialise it
-                 obj.(modelName){chr} = hmm_cont(obj.pop, [], t);
+                obj.(modelName){chr} = hmm_cont(obj.pop, [], t);
             end
             obj.(modelName){chr}.calcT(linkageLoosening);
         end
@@ -336,7 +336,7 @@ classdef readDataVect < dynamicprops % < handle
                 x_cM = interp1(obj.chrMap(chr).nt, obj.chrMap(chr).cM, double(obj.x(obj.ci{chr})),'pchip','extrap');
             end
         end
-                
+        
         %% plotting
         varargout = plotChromosomes(obj, fields, varargin);
         
@@ -347,14 +347,14 @@ classdef readDataVect < dynamicprops % < handle
         %% plot likelihood and posterior
         function plotStems(obj, fields, varargin)
             
-             if nargin>2 && isscalar(varargin{1}) && isnumeric(varargin{1})
+            if nargin>2 && isscalar(varargin{1}) && isnumeric(varargin{1})
                 chr0 = varargin{1};
-                 fieldPlotFun = @(x)obj.plotOneChromosome(chr0, x{:});
-                 args = varargin(2:end);
-            else                
-                 fieldPlotFun = @(x)obj.plotChromosomes(x{:});
-                 args = varargin;
-             end
+                fieldPlotFun = @(x)obj.plotOneChromosome(chr0, x{:});
+                args = varargin(2:end);
+            else
+                fieldPlotFun = @(x)obj.plotChromosomes(x{:});
+                args = varargin;
+            end
             
             markerSz = 4;
             fieldPlotFun({obj, fields, ...
@@ -422,13 +422,19 @@ classdef readDataVect < dynamicprops % < handle
         obj =  AR.runBaumWelch(obj, chr);
         %%
         obj = set_cMaxX(obj, filePath);
-%         function [cc, xIndOnChr] = findChrByIndex(obj, ind)
-%             assert( all(ind <= obj.Mtot), 'index/ces out of bound!')
-%             cInds = bsxfun(@le, obj.cSta(:)', ind(:)) & bsxfun(@le, ind(:), obj.cEnd(:)');
-%             assert( all(sum(cInds,2) == 1), 'ambigous mapping!')
-%             dict = double(1:obj.chrNumber)';
-%             cc = double(cInds)*dict;
-%             xIndOnChr = ind - obj.cSta(cc)' + 1;
-%         end
+        %         function [cc, xIndOnChr] = findChrByIndex(obj, ind)
+        %             assert( all(ind <= obj.Mtot), 'index/ces out of bound!')
+        %             cInds = bsxfun(@le, obj.cSta(:)', ind(:)) & bsxfun(@le, ind(:), obj.cEnd(:)');
+        %             assert( all(sum(cInds,2) == 1), 'ambigous mapping!')
+        %             dict = double(1:obj.chrNumber)';
+        %             cc = double(cInds)*dict;
+        %             xIndOnChr = ind - obj.cSta(cc)' + 1;
+        %         end
+        
+        function plotMarker(obj, field, chr0, x0, varargin)
+                ind = (obj.x== x0 & obj.chromosome == chr0);
+                obj.plotChromosomes(field, 'yscale', 'lin', 'figure', 'old', 'plotfun',...
+                    @(x,y)plot(x,y, 'r^', 'markersize', 12, 'linewidth', 2, varargin{:}), 'select', ind);
+        end
     end
 end

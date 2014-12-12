@@ -2,8 +2,8 @@ close all; clear all; clc;
 dbclear if warning
 tic
 
-GRAPH_EXPORT_TYPE = 'pdf'; % 'eps'
-% DATA_PATH = '/media/Processing/seq/data';
+GRAPH_EXPORT_TYPE = 'eps';
+% DATA_PATH = '/media/Processintg/seq/data';
 DATA_PATH = './raw_data';
 USERFNCT_PATH = './dependencies';
 FIGURES_PATH = './figures';
@@ -19,10 +19,10 @@ addpath('./emission');
 %= known positions of the causative SNP can be also provided here for
 %= further visualization
 %= + number of individuals in the mapping population (N)
-dataID = 'HL7/p889_20110125_HL7_Paired-rmdup-clipOverlap-q20-ems-annotation'; x0 = 5672441; chr0 = 1; N = 50;
+dataID = 'ABD/20140516.B-ABD192-ngm-rmdup-clipOverlap-q20-nm6-ems-annotation';  N = 100; chr0 = 5; x0 = 21253358;% AT5G52340
 
-linkageLoosening = 16; % 1./(0:0.01:1);
-
+deltaLinkage = 0.01;
+linkageLoosening = 1;%  [ 1./(deltaLinkage:deltaLinkage:1) ];
 %%
 disp(['=======  Processing data from the run ''', dataID, ''' ======='])
 
@@ -30,7 +30,7 @@ disp(['=======  Processing data from the run ''', dataID, ''' ======='])
 %= construct the path to the (primary experimental) data file
 dataPath = fullfile(DATA_PATH, [dataID, '.csv'] );
 %= extract the refenece reads if the reference ID is given:
-dataID = constructOutName( dataID, linkageLoosening );
+dataID = [constructOutName( dataID, linkageLoosening )];
 mkdir(fullfile(FIGURES_PATH, dataID))
 copyfile('./ResultsInfo.txt', fullfile(FIGURES_PATH, dataID, 'README.txt'))
 
@@ -127,16 +127,20 @@ end
 
 AR.plotChromosomes('xLogOdds', 'yscale', 'lin', 'figure', 'new', 'yThr', 0);
 
+if exist('chr0', 'var')
+    AR.plotMarker('xLogOdds', chr0, x0, 'markersize', 6)
+end
+
 fig(gcf, 'width', 24)
 exportfig(gcf, fullfile(FIGURES_PATH, dataID,'LogLiOdds'), 'format', GRAPH_EXPORT_TYPE, 'color', 'rgb')
 
 %% plot likelihood and posterior
 AR.plotStemsLP( 'ylim', [-20,0])
+
 if exist('chr0', 'var')
-    ind = (AR.x==x0 & AR.chromosome == chr0);    
-    AR.plotChromosomes('xPselNorm', 'yscale', 'lin', 'figure', 'old', 'plotfun',...
-        @(x,y)plot(x,y, 'r^', 'markersize', 6, 'linewidth', 2), 'select', ind);
+    AR.plotMarker('xPselNorm', chr0, x0, 'markersize', 12)
 end
+
 fig(gcf, 'width', 24)
 exportfig(gcf, fullfile(FIGURES_PATH, dataID, 'LH-Posterior'), 'format',GRAPH_EXPORT_TYPE, 'color', 'rgb')
 

@@ -108,7 +108,7 @@ ChrNumber = max(chromosome);
 Reads = readDataVect(chromosome, double(position), double(q), double(r), [], false);
 
 mutationRating = data{3};
-BASE = 2;
+BASE = 10;
 Reads.xPrior = BASE.^(mutationRating);
 Reads.xPrior = Reads.xPrior./sum(Reads.xPrior);
 Reads.xPrior = log10(Reads.xPrior);

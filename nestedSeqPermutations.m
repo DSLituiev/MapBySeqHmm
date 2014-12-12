@@ -37,7 +37,7 @@ classdef nestedSeqPermutations < readDataVect
             %   obj.bin_membership = fix(2*log10(obj.dx));
             if obj.bin_num>1
                 [~,inds] = sort(obj.dx);
-                minBin = numel(obj.dx)/obj.bin_num;                
+                minBin = numel(obj.dx)/obj.bin_num;
                 obj.bin_membership = halve(inds, minBin);
                 obj.bin_num = max(obj.bin_membership);
             else
@@ -70,36 +70,56 @@ classdef nestedSeqPermutations < readDataVect
             end
         end
         
-        function [xnPsel, xnLogOdds] = iterate(obj, n_iter, varargin)            
+        function [xnPsel, xnLogOdds] = iterate(obj, n_iter, varargin)
             obj.split(varargin{:});
             warning off;
             msgLength = 0;
-%             f1 = figure('name', 'f');hold on
-%             f2 = figure('name', 'p_sel'); hold on
-%%
-                nn = n_iter;
-                obj.runHMM('silent', true);
-                % obj.normalizeChromosomes;
-                xnPsel(:, nn) = obj.xPsel;                
-%                 figure(f1); plot(obj.q(obj.chromosome==1)./obj.r(obj.chromosome==1), 'x');
-%                 figure(f2) ; plot(obj.xPsel(obj.chromosome==1))
-                xnLogOdds(:, nn) = obj.xLogOdds;
+            %             f1 = figure('name', 'f');hold on
+            %             f2 = figure('name', 'p_sel'); hold on
+            %%
+            nn = n_iter+1;
+            obj.runHMM('silent', true);
+            % obj.normalizeChromosomes;
+            xnPsel(:, nn) = obj.xPsel;
+            %                 figure(f1); plot(obj.q(obj.chromosome==1)./obj.r(obj.chromosome==1), 'x');
+            %                 figure(f2) ; plot(obj.xPsel(obj.chromosome==1))
+            xnLogOdds(:, nn) = obj.xLogOdds;
+            if any(strcmpi(varargin, 'parallel'))
+                poolobj = gcp('nocreate');
+                if isempty(poolobj)
+                    parpool(6)
+                end
+                parfor nn = 1:1:n_iter
+                    obj_new = obj;
+                    obj_new.permute();
+                    obj_new.E = [];
+                    obj_new.runHMM('silent', true, 'keepTransitionMatrix', true);
+                    % obj.normalizeChromosomes;
+                    xnPsel(:, nn) = obj_new.xPsel;
+                    xnLogOdds(:, nn) = obj.xLogOdds;
+                end
+                if isempty(poolobj)
+                    poolobj = gcp('nocreate');
+                    delete(poolobj);
+                end
+            else
                 msgLength = updateLog( msgLength, nn );
-                
-            for nn = n_iter-1:-1:1
-                obj.permute();
-                obj.E = [];
-                obj.runHMM('silent', true, 'keepTransitionMatrix', true);
-                % obj.normalizeChromosomes;
-                xnPsel(:, nn) = obj.xPsel;                
-%                 figure(f1); plot(obj.q(obj.chromosome==1)./obj.r(obj.chromosome==1), 'x');
-%                 figure(f2) ; plot(obj.xPsel(obj.chromosome==1))
-                xnLogOdds(:, nn) = obj.xLogOdds;
-                msgLength = updateLog( msgLength, nn );
+                for nn = n_iter:-1:1
+                    obj_new = obj;
+                    obj_new.permute();
+                    obj_new.E = [];
+                    obj_new.runHMM('silent', true, 'keepTransitionMatrix', true);
+                    % obj.normalizeChromosomes;
+                    xnPsel(:, nn) = obj_new.xPsel;
+                    %                 figure(f1); plot(obj.q(obj.chromosome==1)./obj.r(obj.chromosome==1), 'x');
+                    %                 figure(f2) ; plot(obj.xPsel(obj.chromosome==1))
+                    xnLogOdds(:, nn) = obj.xLogOdds;
+                    msgLength = updateLog( msgLength, nn );
+                end
             end
             %%
             warning on;
-            fprintf('\n')            
+            fprintf('\n')
         end
     end
     

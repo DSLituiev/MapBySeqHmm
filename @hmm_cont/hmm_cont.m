@@ -30,7 +30,7 @@ classdef hmm_cont < handle
     
     methods
         %% initialization / construction
-        function obj = hmm_cont(population_obj, emission_matrix, dist_genetic)
+        function obj = hmm_cont(population_obj, emission_matrix, dist_genetic, linkageLoosening)
             if isobject(population_obj)
                 obj.pop = population_obj;
             elseif isscalar(population_obj)
@@ -59,6 +59,9 @@ classdef hmm_cont < handle
             else
                 obj.t = [];
             end
+            if nargin>3
+                obj.linkageLoosening = linkageLoosening;
+            end
         end
         
         %% transition
@@ -72,9 +75,11 @@ classdef hmm_cont < handle
             assert( isscalar(obj.linkageLoosening), 'linkageLoosening factor must be a scalar')
             %= calculate Transition matrices
             obj.T = zeros(obj.pop.Np, obj.pop.Np, obj.M-1);
-            %             t = Alpha * 0.01* abs(diff(recdistances(obj.chrMap(chr), obj.x(obj.ci{chr})))) ;
-            delta_t = diff(obj.t, 1);
-            %             obj.t = linkageLoosening * 0.01* obj.recdistances(chr);
+            delta_t = obj.linkageLoosening * diff(obj.t, 1);
+            if any(delta_t<0)
+                warning('the x-values are not ordered non-decreasingly!');
+                delta_t = abs(delta_t);
+            end
             %= calculate
             for ii = 1:(obj.M-1)
                 if delta_t(ii)~=0 && ~isinf(delta_t(ii))
@@ -87,7 +92,7 @@ classdef hmm_cont < handle
             end
             %= sanity check
             if   any(obj.T(:)<0)
-                if abs(obj.T(obj.T(:)<0)) > 1e-25
+                if any( abs(obj.T(obj.T(:)<0)) > 1e-25 )
                     error('transition3D_expm:TNegInput', 'T matrix has negative values!')
                 else
                     [~, msgid] = lastwarn;
@@ -198,6 +203,10 @@ classdef hmm_cont < handle
                 return
             end
         end
+        totLh = totLikelihood(obj, Alhpa);
+        totLh = statLikelihood(obj, Alhpa);
+        totLh = selLikelihood(obj, Alhpa);
+        [ Alhpa_opt, Lh ] = optimizeTransition( obj );
     end
 end
 
